@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2 (2026-11-02)
+
+- The README's links to the docs, SECURITY.md and the CHANGELOG are absolute GitHub links. PyPI
+  resolves a relative link against its own project page, so on the 0.3.1 page every one of them
+  led nowhere.
+
 ## 0.3.1 (2026-11-02)
 
 - The README's diagram of how it works is an image, as the charts are: PyPI does not render

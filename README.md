@@ -33,10 +33,10 @@ wrong guess costs a review round.
 
 | | |
 |:---|:---|
-| **Accurate where it counts** | Setup order and routes come from pytest and FastAPI themselves: setup order equals `pytest --setup-plan` on every node tested. `refs`, `def` and `impact` read the code statically: they follow imports and re-exports, so an alias counts and a same-named function elsewhere does not, and a name whose meaning depends on run time is left unresolved rather than guessed ([limits](docs/limits.md)). |
+| **Accurate where it counts** | Setup order and routes come from pytest and FastAPI themselves: setup order equals `pytest --setup-plan` on every node tested. `refs`, `def` and `impact` read the code statically: they follow imports and re-exports, so an alias counts and a same-named function elsewhere does not, and a name whose meaning depends on run time is left unresolved rather than guessed ([limits](https://github.com/benchli-sports/codeterrain/blob/main/docs/limits.md)). |
 | **Fast** | Most warm answers take 0.3 to 0.5 s on a large backend, Python start-up included. |
 | **Shorter to read** | 4.4x to 8.8x fewer characters than the grep-and-read it replaces, on code bases with a real fixture graph. That measures the answer, not a whole session's tokens, cost or time. |
-| **Careful with your repo** | The static tier never runs the target's code. Setup order and routes have to import it: they run in a subprocess with an allowlisted environment, dummy cloud credentials and a best-effort network guard, which stop accidents, not hostile code. Run those two on code you trust ([SECURITY.md](SECURITY.md)). |
+| **Careful with your repo** | The static tier never runs the target's code. Setup order and routes have to import it: they run in a subprocess with an allowlisted environment, dummy cloud credentials and a best-effort network guard, which stop accidents, not hostile code. Run those two on code you trust ([SECURITY.md](https://github.com/benchli-sports/codeterrain/blob/main/SECURITY.md)). |
 
 ## Quick start
 
@@ -145,7 +145,7 @@ commands import the code: use them only on code you trust.
 | Where is a Terraform resource, variable or module, and who reads it? | `codeterrain def NAME`, `codeterrain refs NAME` (Terraform pack) | Terraform's own names (`aws_s3_bucket.logs`, `var.region`, `module.vpc`) and the block each reference sits in |
 | What is the module tree, and which providers are pinned? | `codeterrain def --kind module`, `codeterrain def --kind required_provider` | Every module call with its source and version; provider aliases and what selects them |
 
-Every option is in **[docs/commands.md](docs/commands.md)**.
+Every option is in **[docs/commands.md](https://github.com/benchli-sports/codeterrain/blob/main/docs/commands.md)**.
 
 ## Results
 
@@ -223,7 +223,7 @@ An estimate from the two measurements above, not an A/B experiment:
 Lookups are only part of a session: reasoning, editing and test runs are untouched, and small code
 bases save little. Tokens here are characters divided by four. A session-level A/B, the same lane run
 with and without `codeterrain`, is the next measurement. The method and the per-repository results are in
-[docs/why-codeterrain.md](docs/why-codeterrain.md).
+[docs/why-codeterrain.md](https://github.com/benchli-sports/codeterrain/blob/main/docs/why-codeterrain.md).
 
 ## How it works
 
@@ -242,8 +242,8 @@ with and without `codeterrain`, is the next measurement. The method and the per-
 - **The cache** lives outside the checkout, in the git common directory or your user cache, and is
   keyed on content hashes.
 
-More in [docs/how-it-works.md](docs/how-it-works.md), [docs/sandbox.md](docs/sandbox.md) and
-[SECURITY.md](SECURITY.md).
+More in [docs/how-it-works.md](https://github.com/benchli-sports/codeterrain/blob/main/docs/how-it-works.md), [docs/sandbox.md](https://github.com/benchli-sports/codeterrain/blob/main/docs/sandbox.md) and
+[SECURITY.md](https://github.com/benchli-sports/codeterrain/blob/main/SECURITY.md).
 
 ## Why this exists
 
@@ -252,25 +252,25 @@ is a large FastAPI service with a very large test suite, developed with coding a
 agents' tokens went on re-mapping the same structure every session, and a hand-kept map went stale
 within weeks. The goal became exact answers, straight from the code, locally and in under a second, in
 every repository benchli and Mitbolas develop with agents. The full story, and why we did not adopt a
-knowledge-graph tool, are in [docs/why-codeterrain.md](docs/why-codeterrain.md).
+knowledge-graph tool, are in [docs/why-codeterrain.md](https://github.com/benchli-sports/codeterrain/blob/main/docs/why-codeterrain.md).
 
 ## Documentation
 
 | | |
 |:---|:---|
-| [Commands](docs/commands.md) | Every command, option and output |
-| [Configuration](docs/configuration.md) | Precedence, every key with its default, monorepos and non-default layouts |
-| [How it works](docs/how-it-works.md) | The two tiers, the cache, extractor programs |
-| [The sandbox](docs/sandbox.md) | What the import tier runs with, and every gap in the network guard |
-| [Limits](docs/limits.md) | What a static walk does not see, and the bounds set on purpose |
-| [Security](SECURITY.md) | The trust model: what is guaranteed and what is best-effort |
-| [Extractor protocol](docs/extractor-protocol.md) | Writing an extractor or a language pack for another language or framework |
-| [Terraform pack](packages/codeterrain-terraform/README.md) | `.tf` files in `def` and `refs`: resources, modules, providers |
-| [TypeScript pack](packages/codeterrain-typescript/README.md) | Front-end calls read with tree-sitter, and why it is the reader to install |
-| [Design notes](docs/design-v0.2.md) | The decisions behind the front-end calls and the language packs |
-| [Why codeterrain](docs/why-codeterrain.md) | The origin, the measurements, what is not proven yet |
-| [Prior art](docs/prior-art.md) | What twelve comparable tools document answering, read from their docs |
-| [Changelog](CHANGELOG.md) | What changed, release by release |
+| [Commands](https://github.com/benchli-sports/codeterrain/blob/main/docs/commands.md) | Every command, option and output |
+| [Configuration](https://github.com/benchli-sports/codeterrain/blob/main/docs/configuration.md) | Precedence, every key with its default, monorepos and non-default layouts |
+| [How it works](https://github.com/benchli-sports/codeterrain/blob/main/docs/how-it-works.md) | The two tiers, the cache, extractor programs |
+| [The sandbox](https://github.com/benchli-sports/codeterrain/blob/main/docs/sandbox.md) | What the import tier runs with, and every gap in the network guard |
+| [Limits](https://github.com/benchli-sports/codeterrain/blob/main/docs/limits.md) | What a static walk does not see, and the bounds set on purpose |
+| [Security](https://github.com/benchli-sports/codeterrain/blob/main/SECURITY.md) | The trust model: what is guaranteed and what is best-effort |
+| [Extractor protocol](https://github.com/benchli-sports/codeterrain/blob/main/docs/extractor-protocol.md) | Writing an extractor or a language pack for another language or framework |
+| [Terraform pack](https://github.com/benchli-sports/codeterrain/blob/main/packages/codeterrain-terraform/README.md) | `.tf` files in `def` and `refs`: resources, modules, providers |
+| [TypeScript pack](https://github.com/benchli-sports/codeterrain/blob/main/packages/codeterrain-typescript/README.md) | Front-end calls read with tree-sitter, and why it is the reader to install |
+| [Design notes](https://github.com/benchli-sports/codeterrain/blob/main/docs/design-v0.2.md) | The decisions behind the front-end calls and the language packs |
+| [Why codeterrain](https://github.com/benchli-sports/codeterrain/blob/main/docs/why-codeterrain.md) | The origin, the measurements, what is not proven yet |
+| [Prior art](https://github.com/benchli-sports/codeterrain/blob/main/docs/prior-art.md) | What twelve comparable tools document answering, read from their docs |
+| [Changelog](https://github.com/benchli-sports/codeterrain/blob/main/CHANGELOG.md) | What changed, release by release |
 
 ## Development
 
@@ -281,6 +281,6 @@ uv run --extra dev pytest
 
 Run pytest as a single process (no `-n`). The suite spawns real pytest and interpreter subprocesses, and
 a few tests skip on Windows (no `sendmsg`, no unix-domain sockets). CI also runs it against FastAPI below
-and above 0.137 and pytest 8 and 9. Contributor and review rules are in [AGENTS.md](AGENTS.md).
+and above 0.137 and pytest 8 and 9. Contributor and review rules are in [AGENTS.md](https://github.com/benchli-sports/codeterrain/blob/main/AGENTS.md).
 
 Copyright Mitbolas GmbH. Licensed under Apache-2.0 (see LICENSE and NOTICE).

@@ -79,7 +79,7 @@ wheels = [
 
 [[package]]
 name = "codeterrain"
-version = "0.3.1"
+version = "0.3.2"
 source = { editable = "." }
 dependencies = [
     { name = "pluggy" },
