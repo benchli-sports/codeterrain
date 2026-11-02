@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="414" viewBox="0 0 760 414" font-family='system-ui, -apple-system, "Segoe UI", sans-serif' role="img">
+<title>Characters an agent reads to get the answer</title>
+<desc>Backend: autouse fixtures of a test: grep and read 100, terrain 23; Backend: a route's handler and access: grep and read 100, terrain 14; Backend: who uses the main fixture: grep and read 100, terrain 67; Analytics: who uses the main fixture: grep and read 100, terrain 11; Analytics: fixtures of a test: grep and read 100, terrain 29; Small suite: fixtures of a test: grep and read 100, terrain 125</desc>
+<rect width="760" height="414" rx="8" fill="#fcfcfb"/>
+<text x="24.0" y="30.0" fill="#0b0b0b" font-size="16" font-weight="600" text-anchor="start" dominant-baseline="middle">Characters an agent reads to get the answer</text>
+<text x="24.0" y="52.0" fill="#52514e" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Indexed: today's grep-and-read = 100. Lower is better.</text>
+<rect x="24.0" y="69.0" width="10" height="10" rx="2" fill="#eb6834"/>
+<text x="40.0" y="74.0" fill="#52514e" font-size="12" font-weight="400" text-anchor="start" dominant-baseline="middle">grep and read, today (= 100)</text>
+<rect x="248.8" y="69.0" width="10" height="10" rx="2" fill="#2a78d6"/>
+<text x="264.8" y="74.0" fill="#52514e" font-size="12" font-weight="400" text-anchor="start" dominant-baseline="middle">terrain</text>
+<line x1="250.0" y1="90.0" x2="250.0" y2="374.0" stroke="#c3c2b7" stroke-width="1"/>
+<text x="250.0" y="388.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">0</text>
+<line x1="328.0" y1="90.0" x2="328.0" y2="374.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="328.0" y="388.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">25</text>
+<line x1="406.0" y1="90.0" x2="406.0" y2="374.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="406.0" y="388.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">50</text>
+<line x1="484.0" y1="90.0" x2="484.0" y2="374.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="484.0" y="388.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">75</text>
+<line x1="562.0" y1="90.0" x2="562.0" y2="374.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="562.0" y="388.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">100</text>
+<line x1="640.0" y1="90.0" x2="640.0" y2="374.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="640.0" y="388.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">125</text>
+<text x="24.0" y="111.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Backend: autouse fixtures of a test</text>
+<path d="M250.0 96.0 H558.0 Q562.0 96.0 562.0 100.0 V106.0 Q562.0 110.0 558.0 110.0 H250.0 Z" fill="#eb6834"/>
+<text x="568.0" y="103.0" fill="#52514e" font-size="11" font-weight="400" text-anchor="start" dominant-baseline="middle">100</text>
+<path d="M250.0 112.0 H316.9 Q320.9 112.0 320.9 116.0 V122.0 Q320.9 126.0 316.9 126.0 H250.0 Z" fill="#2a78d6"/>
+<text x="326.9" y="119.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">23  (4.4x fewer)</text>
+<text x="24.0" y="159.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Backend: a route's handler and access</text>
+<path d="M250.0 144.0 H558.0 Q562.0 144.0 562.0 148.0 V154.0 Q562.0 158.0 558.0 158.0 H250.0 Z" fill="#eb6834"/>
+<text x="568.0" y="151.0" fill="#52514e" font-size="11" font-weight="400" text-anchor="start" dominant-baseline="middle">100</text>
+<path d="M250.0 160.0 H291.2 Q295.2 160.0 295.2 164.0 V170.0 Q295.2 174.0 291.2 174.0 H250.0 Z" fill="#2a78d6"/>
+<text x="301.2" y="167.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">14  (6.9x fewer)</text>
+<text x="24.0" y="207.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Backend: who uses the main fixture</text>
+<path d="M250.0 192.0 H558.0 Q562.0 192.0 562.0 196.0 V202.0 Q562.0 206.0 558.0 206.0 H250.0 Z" fill="#eb6834"/>
+<text x="568.0" y="199.0" fill="#52514e" font-size="11" font-weight="400" text-anchor="start" dominant-baseline="middle">100</text>
+<path d="M250.0 208.0 H454.0 Q458.0 208.0 458.0 212.0 V218.0 Q458.0 222.0 454.0 222.0 H250.0 Z" fill="#2a78d6"/>
+<text x="464.0" y="215.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">67  (1.5x fewer)</text>
+<text x="24.0" y="255.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Analytics: who uses the main fixture</text>
+<path d="M250.0 240.0 H558.0 Q562.0 240.0 562.0 244.0 V250.0 Q562.0 254.0 558.0 254.0 H250.0 Z" fill="#eb6834"/>
+<text x="568.0" y="247.0" fill="#52514e" font-size="11" font-weight="400" text-anchor="start" dominant-baseline="middle">100</text>
+<path d="M250.0 256.0 H281.5 Q285.5 256.0 285.5 260.0 V266.0 Q285.5 270.0 281.5 270.0 H250.0 Z" fill="#2a78d6"/>
+<text x="291.5" y="263.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">11  (8.8x fewer)</text>
+<text x="24.0" y="303.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Analytics: fixtures of a test</text>
+<path d="M250.0 288.0 H558.0 Q562.0 288.0 562.0 292.0 V298.0 Q562.0 302.0 558.0 302.0 H250.0 Z" fill="#eb6834"/>
+<text x="568.0" y="295.0" fill="#52514e" font-size="11" font-weight="400" text-anchor="start" dominant-baseline="middle">100</text>
+<path d="M250.0 304.0 H335.1 Q339.1 304.0 339.1 308.0 V314.0 Q339.1 318.0 335.1 318.0 H250.0 Z" fill="#2a78d6"/>
+<text x="345.1" y="311.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">29  (3.5x fewer)</text>
+<text x="24.0" y="351.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Small suite: fixtures of a test</text>
+<path d="M250.0 336.0 H558.0 Q562.0 336.0 562.0 340.0 V346.0 Q562.0 350.0 558.0 350.0 H250.0 Z" fill="#eb6834"/>
+<text x="568.0" y="343.0" fill="#52514e" font-size="11" font-weight="400" text-anchor="start" dominant-baseline="middle">100</text>
+<path d="M250.0 352.0 H636.0 Q640.0 352.0 640.0 356.0 V362.0 Q640.0 366.0 636.0 366.0 H250.0 Z" fill="#2a78d6"/>
+<text x="646.0" y="359.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">125  (longer)</text>
+</svg>

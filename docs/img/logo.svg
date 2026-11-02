@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="codeterrain logo: a shell prompt whose cursor is a ridge line">
+  <rect width="120" height="120" rx="14" fill="#0A192F"/>
+  <polyline points="24,38 46,60 24,82" fill="none" stroke="#3B82F6" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="54,84 66,68 74,76 88,54 102,84" fill="none" stroke="#D4AF37" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

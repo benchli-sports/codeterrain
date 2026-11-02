@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "codeterrain"
+version = "0.3.0"
+description = "terrain: answers about your code in under a second. Local, LLM-free structure facts for coding agents; Python first."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Mitbolas GmbH" }]
+keywords = ["coding-agents", "pytest", "fixtures", "fastapi", "static-analysis", "code-index"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: Pytest",
+    "Framework :: FastAPI",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = ["pluggy>=1.3"]
+
+[project.optional-dependencies]
+# Language packs, one extra each: pip install "codeterrain[terraform]".
+terraform = ["codeterrain-terraform>=0.2"]
+typescript = ["codeterrain-typescript>=0.1"]
+dev = ["pytest>=8", "fastapi>=0.115", "httpx", "ruff", "boto3", "codeterrain-terraform",
+       "codeterrain-typescript"]
+
+[project.urls]
+Homepage = "https://github.com/benchli-sports/codeterrain"
+Issues = "https://github.com/benchli-sports/codeterrain/issues"
+
+[project.scripts]
+terrain = "codeterrain.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/codeterrain"]
+
+# The language packs live in packages/, each its own distribution.
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+codeterrain-terraform = { workspace = true }
+codeterrain-typescript = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "packages"]
+norecursedirs = ["sample_repo", ".venv", ".git"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "codeterrain-terraform"
+version = "0.2.0"
+description = "Terraform for codeterrain: resources, modules, providers and references of .tf files in terrain def and refs."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Mitbolas GmbH" }]
+dependencies = ["codeterrain>=0.3"]
+
+[project.entry-points."codeterrain.languages"]
+terraform = "codeterrain_terraform:language"
+
+[project.urls]
+Homepage = "https://github.com/benchli-sports/codeterrain"
+Issues = "https://github.com/benchli-sports/codeterrain/issues"
+
+[tool.uv.sources]
+codeterrain = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/codeterrain_terraform"]

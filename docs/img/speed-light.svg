@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="314" viewBox="0 0 760 314" font-family='system-ui, -apple-system, "Segoe UI", sans-serif' role="img">
+<title>Warm answers, Python start-up included</title>
+<desc>terrain fixtures: 0.35 s; terrain routes: 0.35 s; terrain refs: 0.36 s; terrain def: 0.45 s; terrain setup-order: 0.49 s; terrain impact: 1.17 s</desc>
+<rect width="760" height="314" rx="8" fill="#fcfcfb"/>
+<text x="24.0" y="30.0" fill="#0b0b0b" font-size="16" font-weight="600" text-anchor="start" dominant-baseline="middle">Warm answers, Python start-up included</text>
+<text x="24.0" y="52.0" fill="#52514e" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Medians of 5 runs of the real command on the backend. Lower is better.</text>
+<line x1="250.0" y1="74.0" x2="250.0" y2="274.0" stroke="#c3c2b7" stroke-width="1"/>
+<text x="250.0" y="288.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">0 s</text>
+<line x1="315.0" y1="74.0" x2="315.0" y2="274.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="315.0" y="288.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">0.25 s</text>
+<line x1="380.0" y1="74.0" x2="380.0" y2="274.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="380.0" y="288.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">0.5 s</text>
+<line x1="445.0" y1="74.0" x2="445.0" y2="274.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="445.0" y="288.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">0.75 s</text>
+<line x1="510.0" y1="74.0" x2="510.0" y2="274.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="510.0" y="288.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">1 s</text>
+<line x1="575.0" y1="74.0" x2="575.0" y2="274.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="575.0" y="288.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">1.25 s</text>
+<line x1="640.0" y1="74.0" x2="640.0" y2="274.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="640.0" y="288.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">1.5 s</text>
+<line x1="510.0" y1="74.0" x2="510.0" y2="274.0" stroke="#52514e" stroke-width="1"/>
+<text x="516.0" y="82.0" fill="#52514e" font-size="11" font-weight="400" text-anchor="start" dominant-baseline="middle">goal: under 1 s</text>
+<text x="24.0" y="87.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">terrain fixtures</text>
+<path d="M250.0 80.0 H337.0 Q341.0 80.0 341.0 84.0 V90.0 Q341.0 94.0 337.0 94.0 H250.0 Z" fill="#2a78d6"/>
+<text x="347.0" y="87.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">0.35 s</text>
+<text x="24.0" y="121.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">terrain routes</text>
+<path d="M250.0 114.0 H337.0 Q341.0 114.0 341.0 118.0 V124.0 Q341.0 128.0 337.0 128.0 H250.0 Z" fill="#2a78d6"/>
+<text x="347.0" y="121.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">0.35 s</text>
+<text x="24.0" y="155.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">terrain refs</text>
+<path d="M250.0 148.0 H339.6 Q343.6 148.0 343.6 152.0 V158.0 Q343.6 162.0 339.6 162.0 H250.0 Z" fill="#2a78d6"/>
+<text x="349.6" y="155.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">0.36 s</text>
+<text x="24.0" y="189.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">terrain def</text>
+<path d="M250.0 182.0 H363.0 Q367.0 182.0 367.0 186.0 V192.0 Q367.0 196.0 363.0 196.0 H250.0 Z" fill="#2a78d6"/>
+<text x="373.0" y="189.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">0.45 s</text>
+<text x="24.0" y="223.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">terrain setup-order</text>
+<path d="M250.0 216.0 H373.4 Q377.4 216.0 377.4 220.0 V226.0 Q377.4 230.0 373.4 230.0 H250.0 Z" fill="#2a78d6"/>
+<text x="383.4" y="223.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">0.49 s</text>
+<text x="24.0" y="257.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">terrain impact</text>
+<path d="M250.0 250.0 H550.2 Q554.2 250.0 554.2 254.0 V260.0 Q554.2 264.0 550.2 264.0 H250.0 Z" fill="#2a78d6"/>
+<text x="560.2" y="257.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">1.17 s</text>
+</svg>

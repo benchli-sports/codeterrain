@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="280" viewBox="0 0 760 280" font-family='system-ui, -apple-system, "Segoe UI", sans-serif' role="img">
+<title>Accuracy against the framework's own answer</title>
+<desc>Setup order equal to pytest --setup-plan: 11 of 11 nodes; Routes joined to the access manifest: every route; Calls matched to a route, large backend: 97%; Calls matched to a route, smaller service: 96%; Calls found by refs, against grep, monorepo: 99%</desc>
+<rect width="760" height="280" rx="8" fill="#fcfcfb"/>
+<text x="24.0" y="30.0" fill="#0b0b0b" font-size="16" font-weight="600" text-anchor="start" dominant-baseline="middle">Accuracy against the framework's own answer</text>
+<text x="24.0" y="52.0" fill="#52514e" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Each figure checked against pytest, the access manifest, or by hand. Higher is better.</text>
+<line x1="330.0" y1="74.0" x2="330.0" y2="240.0" stroke="#c3c2b7" stroke-width="1"/>
+<text x="330.0" y="254.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">0%</text>
+<line x1="407.5" y1="74.0" x2="407.5" y2="240.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="407.5" y="254.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">25%</text>
+<line x1="485.0" y1="74.0" x2="485.0" y2="240.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="485.0" y="254.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">50%</text>
+<line x1="562.5" y1="74.0" x2="562.5" y2="240.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="562.5" y="254.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">75%</text>
+<line x1="640.0" y1="74.0" x2="640.0" y2="240.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="640.0" y="254.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">100%</text>
+<text x="24.0" y="87.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Setup order equal to pytest --setup-plan</text>
+<path d="M330.0 80.0 H636.0 Q640.0 80.0 640.0 84.0 V90.0 Q640.0 94.0 636.0 94.0 H330.0 Z" fill="#2a78d6"/>
+<text x="646.0" y="87.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">11 of 11 nodes</text>
+<text x="24.0" y="121.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Routes joined to the access manifest</text>
+<path d="M330.0 114.0 H636.0 Q640.0 114.0 640.0 118.0 V124.0 Q640.0 128.0 636.0 128.0 H330.0 Z" fill="#2a78d6"/>
+<text x="646.0" y="121.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">every route</text>
+<text x="24.0" y="155.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Calls matched to a route, large backend</text>
+<path d="M330.0 148.0 H626.7 Q630.7 148.0 630.7 152.0 V158.0 Q630.7 162.0 626.7 162.0 H330.0 Z" fill="#2a78d6"/>
+<text x="636.7" y="155.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">97%</text>
+<text x="24.0" y="189.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Calls matched to a route, smaller service</text>
+<path d="M330.0 182.0 H623.6 Q627.6 182.0 627.6 186.0 V192.0 Q627.6 196.0 623.6 196.0 H330.0 Z" fill="#2a78d6"/>
+<text x="633.6" y="189.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">96%</text>
+<text x="24.0" y="223.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Calls found by refs, against grep, monorepo</text>
+<path d="M330.0 216.0 H632.9 Q636.9 216.0 636.9 220.0 V226.0 Q636.9 230.0 632.9 230.0 H330.0 Z" fill="#2a78d6"/>
+<text x="642.9" y="223.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">99%</text>
+</svg>

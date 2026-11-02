@@ -1,0 +1,9 @@
+{
+  "routes": [
+    {"method": "GET", "path": "/v1/items/{item_id}", "access": "member", "apps": ["sampleapp.main"]},
+    {"method": "POST", "path": "/v1/items", "access": "manager", "apps": ["sampleapp.main"]},
+    {"method": "GET", "path": "/v1/admin/audit", "access": "staff", "apps": ["sampleapp.main"]},
+    {"method": "GET", "path": "/health", "access": "public", "apps": ["sampleapp.other"]},
+    {"method": "GET", "path": "/v1/removed", "access": "public", "apps": ["sampleapp.main"]}
+  ]
+}

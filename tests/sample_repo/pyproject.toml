@@ -1,0 +1,9 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.codeterrain]
+apps = ["sampleapp.main:app", "sampleapp.other:other"]
+test_paths = ["tests"]
+route_manifest = "docs/route-access.json"
+import_env = { SAMPLE_ENV = "test" }
