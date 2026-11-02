@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "codeterrain-terraform"
-version = "0.2.0"
+version = "0.2.1"
 description = "Terraform for codeterrain: resources, modules, providers and references of .tf files in terrain def and refs."
 readme = "README.md"
 requires-python = ">=3.12"

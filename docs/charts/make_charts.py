@@ -90,7 +90,7 @@ def legend(items: list[tuple[str, str]], y: float, t: dict[str, str]) -> list[st
 # --- 1. characters an agent reads ---------------------------------------------------------------
 
 TOKENS = [
-    # (row label, x fewer characters with terrain)
+    # (row label, x fewer characters with codeterrain)
     ("Backend: autouse fixtures of a test", 4.4),
     ("Backend: a route's handler and access", 6.9),
     ("Backend: who uses the main fixture", 1.5),
@@ -104,7 +104,7 @@ def tokens_chart(t: dict[str, str]) -> str:
     x0, top, row = LABEL_W, 96.0, 2 * BAR + GAP + 18
     scale = (WIDTH - LABEL_W - RIGHT_PAD) / 125
     bottom = top + row * len(TOKENS) - 10
-    body = legend([("grep and read, today (= 100)", "s2"), ("terrain", "s1")], 74, t)
+    body = legend([("grep and read, today (= 100)", "s2"), ("codeterrain", "s1")], 74, t)
     body += axis(x0, scale, [0, 25, 50, 75, 100, 125], top - 6, bottom, t, lambda v: f"{v:.0f}")
     for i, (label, ratio) in enumerate(TOKENS):
         y = top + i * row
@@ -116,7 +116,8 @@ def tokens_chart(t: dict[str, str]) -> str:
         note = f"{after:.0f}  ({ratio:g}x fewer)" if ratio >= 1 else f"{after:.0f}  (longer)"
         body.append(text(x0 + after * scale + 6, y + BAR + GAP + BAR / 2, note, t["ink"], 11,
                          weight=600))
-    desc = "; ".join(f"{label}: grep and read 100, terrain {100 / r:.0f}" for label, r in TOKENS)
+    desc = "; ".join(f"{label}: grep and read 100, codeterrain {100 / r:.0f}"
+                     for label, r in TOKENS)
     return frame(
         "Characters an agent reads to get the answer",
         "Indexed: today's grep-and-read = 100. Lower is better.",
@@ -181,7 +182,7 @@ def field_chart(t: dict[str, str]) -> str:
                          weight=600))
     desc = "; ".join(f"{label}: {share}%" for label, share in FIELD)
     return frame(
-        "Coding agents using terrain on real work",
+        "Coding agents using codeterrain on real work",
         "160 lookups the agents logged, 26 Oct to 2 Nov 2026, by outcome, as they judged it.",
         bottom + 40, body, t, desc,
     )
@@ -191,12 +192,12 @@ def field_chart(t: dict[str, str]) -> str:
 
 SPEED = [
     # (row label, warm seconds, Python start-up included)
-    ("terrain fixtures", 0.35),
-    ("terrain routes", 0.35),
-    ("terrain refs", 0.36),
-    ("terrain def", 0.45),
-    ("terrain setup-order", 0.49),
-    ("terrain impact", 1.17),
+    ("codeterrain fixtures", 0.35),
+    ("codeterrain routes", 0.35),
+    ("codeterrain refs", 0.36),
+    ("codeterrain def", 0.45),
+    ("codeterrain setup-order", 0.49),
+    ("codeterrain impact", 1.17),
 ]
 SPEED_MAX = 1.5
 
@@ -262,7 +263,7 @@ def architecture_chart(t: dict[str, str]) -> str:
     body = [f'<defs><marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
             f'markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" '
             f'fill="{t["ink2"]}"/></marker></defs>']
-    body += box(24, row, w, h, ["terrain refs NAME", "an agent, or you"], t, t["ink2"], 23, 600)
+    body += box(24, row, w, h, ["codeterrain refs NAME", "an agent, or you"], t, t["ink2"], 23, 600)
     body += box(275, row, w, h, ["cache per repository", "keyed on content"], t, t["s1"], 6, 600)
     body += box(526, row, w, h, ["answer", "in under a second"], t, t["ink2"], 23, 600)
     body.append(arrow(24 + w, row + h / 2, 275, row + h / 2, t))
@@ -274,7 +275,7 @@ def architecture_chart(t: dict[str, str]) -> str:
         ["code index", "ast, SQLite"],
         ["front-end HTTP calls", "tree-sitter, or the JS/TS tokenizer"],
     ], t, "s1")
-    sandboxed, hi = group(386, top, 350, "Import tier: a sandboxed subprocess", [
+    sandboxed, hi = group(386, top, 350, "Import tier: runs the code, in a subprocess", [
         ["setup order", "pytest --collect-only"],
         ["routes", "imports the apps"],
     ], t, "s2")
@@ -283,11 +284,11 @@ def architecture_chart(t: dict[str, str]) -> str:
     body.append(text(205, top - 30, "changed files only", t["ink2"], 11, "end"))
     body.append(arrow(561, top, 420, row + h, t))
     body.append(text(555, top - 30, "on refresh; served stamped stale", t["ink2"], 11))
-    desc = ("A terrain question is answered from a cache per repository, keyed on content: in "
+    desc = ("A codeterrain question is answered from a cache per repository, keyed on content: in "
             "under a second when warm. The static tier fills it from changed files only, reading "
             "fixtures, tests and the code index with Python's ast and front-end calls with "
-            "tree-sitter or a tokenizer; it never runs the code. The import tier, a sandboxed "
-            "subprocess, fills it on refresh with the setup order and the routes.")
+            "tree-sitter or a tokenizer; it never runs the code. The import tier runs the code "
+            "in a guarded subprocess and fills it on refresh with the setup order and the routes.")
     return frame("How it works", "Two tiers fill one cache; every answer is read from it.",
                  top + max(hs, hi) + 24, body, t, desc)
 

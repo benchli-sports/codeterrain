@@ -4,8 +4,10 @@
 
 - The README's diagram of how it works is an image, as the charts are: PyPI does not render
   Mermaid, so the 0.3.0 page showed its source.
-- `codeterrain` is installed as a second name for the `terrain` command, for a machine where
-  another tool already installs a `terrain`.
+- `codeterrain` is the command the docs use; `terrain` stays installed as a shorter name. Another
+  tool on PyPI installs a `terrain` command, and with both installed the last one wins.
+- `codeterrain-terraform` 0.2.1 and `codeterrain-typescript` 0.1.1: their READMEs, which are their
+  PyPI pages, install from PyPI instead of saying the packs are not published. No code change.
 - The README leads with `uv tool install codeterrain` from PyPI, and has a starting point for an
   agent's instructions. Its claims are narrowed to what is measured: no "exact answers" headline;
   `impact` lists the tests that statically reach a name, not the tests that would catch a change;

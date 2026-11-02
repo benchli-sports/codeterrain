@@ -1,8 +1,9 @@
 # codeterrain: instructions for coding agents and contributors
 
-codeterrain is a local, LLM-free, network-free command line tool (`terrain`) that answers questions about
-a repository's code from a cache, in under a second. Python first: pytest fixture order, FastAPI routes,
-definitions and references; plus the HTTP calls of a JavaScript or TypeScript front end. See
+codeterrain is a local, LLM-free, network-free command line tool (`codeterrain`, also installed as
+`terrain`) that answers questions about a repository's code from a cache, in under a second. Python
+first: pytest fixture order, FastAPI routes, definitions and references; plus the HTTP calls of a
+JavaScript or TypeScript front end. See
 [README.md](README.md) for what it does and [docs/extractor-protocol.md](docs/extractor-protocol.md) for
 the extractor protocol.
 

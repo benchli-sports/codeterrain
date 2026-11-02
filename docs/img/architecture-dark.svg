@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="760" height="414" viewBox="0 0 760 414" font-family='system-ui, -apple-system, "Segoe UI", sans-serif' role="img">
 <title>How it works</title>
-<desc>A terrain question is answered from a cache per repository, keyed on content: in under a second when warm. The static tier fills it from changed files only, reading fixtures, tests and the code index with Python's ast and front-end calls with tree-sitter or a tokenizer; it never runs the code. The import tier, a sandboxed subprocess, fills it on refresh with the setup order and the routes.</desc>
+<desc>A codeterrain question is answered from a cache per repository, keyed on content: in under a second when warm. The static tier fills it from changed files only, reading fixtures, tests and the code index with Python's ast and front-end calls with tree-sitter or a tokenizer; it never runs the code. The import tier runs the code in a guarded subprocess and fills it on refresh with the setup order and the routes.</desc>
 <rect width="760" height="414" rx="8" fill="#1a1a19"/>
 <text x="24.0" y="30.0" fill="#f0efec" font-size="16" font-weight="600" text-anchor="start" dominant-baseline="middle">How it works</text>
 <text x="24.0" y="52.0" fill="#c3c2b7" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Two tiers fill one cache; every answer is read from it.</text>
 <defs><marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#c3c2b7"/></marker></defs>
 <rect x="24.0" y="84.0" width="210.0" height="46.0" rx="23.0" fill="#1a1a19" stroke="#c3c2b7" stroke-width="1.5"/>
-<text x="129.0" y="99.0" fill="#f0efec" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="middle">terrain refs NAME</text>
+<text x="129.0" y="99.0" fill="#f0efec" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="middle">codeterrain refs NAME</text>
 <text x="129.0" y="115.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">an agent, or you</text>
 <rect x="275.0" y="84.0" width="210.0" height="46.0" rx="6.0" fill="#1a1a19" stroke="#3987e5" stroke-width="1.5"/>
 <text x="380.0" y="99.0" fill="#f0efec" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="middle">cache per repository</text>
@@ -29,7 +29,7 @@
 <text x="199.0" y="348.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="middle" dominant-baseline="middle">front-end HTTP calls</text>
 <text x="199.0" y="364.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">tree-sitter, or the JS/TS tokenizer</text>
 <rect x="386.0" y="200.0" width="350.0" height="140.0" rx="8" fill="none" stroke="#d95926" stroke-width="1.5" stroke-dasharray="5 4"/>
-<text x="400.0" y="220.0" fill="#d95926" font-size="12" font-weight="600" text-anchor="start" dominant-baseline="middle">Import tier: a sandboxed subprocess</text>
+<text x="400.0" y="220.0" fill="#d95926" font-size="12" font-weight="600" text-anchor="start" dominant-baseline="middle">Import tier: runs the code, in a subprocess</text>
 <rect x="400.0" y="236.0" width="322.0" height="40.0" rx="6.0" fill="#1a1a19" stroke="#383835" stroke-width="1.5"/>
 <text x="561.0" y="248.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="middle" dominant-baseline="middle">setup order</text>
 <text x="561.0" y="264.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">pytest --collect-only</text>

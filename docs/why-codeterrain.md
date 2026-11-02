@@ -42,10 +42,10 @@ Four gains are claimed, and each is measured the same way in every repository:
 
 | Gain | What we measure | How |
 |---|---|---|
-| **Accuracy** | Does `terrain setup-order` give the same fixtures in the same order as pytest? Does every route join the access manifest? Does each front-end call find its route? | `pytest <nodeid> --setup-plan` run in the same sandbox, compared fixture by fixture; the manifest join counted row by row; every unmatched call checked by hand |
-| **Speed** | How long a warm query takes | Median of 5 runs of the real `terrain` command, Python start-up included |
+| **Accuracy** | Does `codeterrain setup-order` give the same fixtures in the same order as pytest? Does every route join the access manifest? Does each front-end call find its route? | `pytest <nodeid> --setup-plan` run in the same sandbox, compared fixture by fixture; the manifest join counted row by row; every unmatched call checked by hand |
+| **Speed** | How long a warm query takes | Median of 5 runs of the real `codeterrain` command, Python start-up included |
 | **Performance** | How long a cold build takes, and how often it is needed | The `refresh` time per view; the cache is rebuilt only when files change |
-| **Tokens** | How much an agent reads to get the answer | Characters of the `terrain` answer against the characters of the greps and reads an agent makes for the same question (at 4 characters per token) |
+| **Tokens** | How much an agent reads to get the answer | Characters of the `codeterrain` answer against the characters of the greps and reads an agent makes for the same question (at 4 characters per token) |
 
 ## 3. Where it has to work
 
@@ -62,12 +62,12 @@ backend. The target list is deliberately balanced across code bases, and not all
 | A Mitbolas media platform: Python service tests beside a TypeScript front end | Static fixture index and front-end calls; its API is not served by FastAPI, so there are no routes to join |
 
 v0.1 covered the Python halves of these repositories. v0.2 adds the TypeScript and JavaScript front ends:
-`terrain calls` lists their HTTP calls, and `terrain callers`, run in a backend, joins them to its routes
+`codeterrain calls` lists their HTTP calls, and `codeterrain callers`, run in a backend, joins them to its routes
 across repositories. 0.3 adds a code index of every Python file, application code and tests alike
-(`terrain def`, `refs`, `importers`, `imports`, `impact`), and language packs: Terraform's `.tf` files in
+(`codeterrain def`, `refs`, `importers`, `imports`, `impact`), and language packs: Terraform's `.tf` files in
 `def` and `refs`, and a tree-sitter reader for the front-end calls.
 
-None of these repositories names `terrain` in its checked-in agent instructions yet: the agents in
+None of these repositories names `codeterrain` in its checked-in agent instructions yet: the agents in
 the field used it through a reminder in the developers' own setup. Until one does, the gains
 below are what the tool delivers when asked, not what an agent session saves (section 8).
 
@@ -77,8 +77,8 @@ Every figure below was measured on the benchli backend, on a read-only checkout.
 
 | Pain | What codeterrain does | Proof |
 |---|---|---|
-| Fixture order guessed wrong | `terrain setup-order NODEID` collects the suite in a sandbox and reads pytest's own resolution | Equal to `pytest <nodeid> --setup-plan` on 5 of 5 backend nodes, each with about 30 fixtures. The test suite also checks synthetic edge shapes against real pytest |
-| Route and auth mapping | `terrain routes` and `terrain route` import the apps in a sandbox and join each route to the access manifest | Every app imported with no errors. Every route joins to the manifest, with the access class equal on every joined row; the only routes without a row are FastAPI's own documentation routes |
+| Fixture order guessed wrong | `codeterrain setup-order NODEID` collects the suite in a sandbox and reads pytest's own resolution | Equal to `pytest <nodeid> --setup-plan` on 5 of 5 backend nodes, each with about 30 fixtures. The test suite also checks synthetic edge shapes against real pytest |
+| Route and auth mapping | `codeterrain routes` and `codeterrain route` import the apps in a sandbox and join each route to the access manifest | Every app imported with no errors. Every route joins to the manifest, with the access class equal on every joined row; the only routes without a row are FastAPI's own documentation routes |
 | Slow lookups | A two-tier cache: static facts from `ast`, slow views from sandboxed subprocesses | Warm queries: 0.34 s (`fixtures`), 0.41 s (`routes`), 0.68 s (`setup-order`), medians of 5 runs including Python start-up |
 | Tokens spent on grep and read | Short, exact answers | 4.4x fewer characters for the autouse-fixture question and 6.9x for the route question, against the greps and reads an agent makes today. See the note below |
 | Is it safe to import the target? | Allowlisted environment, dummy cloud credentials, loopback-only sockets, no writes to the target | Section 6 |
@@ -96,7 +96,7 @@ Every figure below was measured on the benchli backend, on a read-only checkout.
 Cold builds are slower: seconds for the static fixture index, about a minute and a half for the routes,
 and minutes for the setup-order view of the whole suite (measured on a machine shared with another job,
 so that figure is inflated). That is why the slow views are cached and served at once, stamped stale
-when files move, and rebuilt only by `terrain refresh` or `--fresh`.
+when files move, and rebuilt only by `codeterrain refresh` or `--fresh`.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="img/tokens-dark.svg">
@@ -104,7 +104,7 @@ when files move, and rebuilt only by `terrain refresh` or `--fresh`.
 </picture>
 
 **The token figure is characters, not an agent experiment.** We counted the characters of the real
-`terrain` output against the characters of the greps and reads an agent makes for the same question. The
+`codeterrain` output against the characters of the greps and reads an agent makes for the same question. The
 agent side is a floor: it leaves out reasoning, follow-up reads for ambiguous hits and retries. The third
 question we measured, the dependents of the backend's most-used fixture, came out at 1.5x for the
 default 2,000-token answer and at 14x if the agent stops after the fixtures, which are the first block
@@ -120,7 +120,7 @@ Python repositories in the list above. The same harness ran in each one, with th
   with `pytest --setup-plan` run in the same sandbox.
 - **Fixtures of a test:** the `setup-order` answer against grepping `@pytest.fixture` and `autouse`,
   with two lines of context, over the test's conftest chain and module. That is the least an agent reads.
-- **Dependents of the most-used fixture:** the `terrain fixture` answer against `grep -rn` for its name
+- **Dependents of the most-used fixture:** the `codeterrain fixture` answer against `grep -rn` for its name
   over the test paths.
 
 `git status` of every repository was identical before and after each run.
@@ -155,7 +155,7 @@ The runs found places where the tool had assumed a repository shaped like the on
 are fixed, each with a test:
 
 1. Tests were assumed to live in `tests/` at the root. A repository keeping them elsewhere got an empty
-   answer; now `terrain doctor` marks `tests (missing)` and `terrain fixtures` says so.
+   answer; now `codeterrain doctor` marks `tests (missing)` and `codeterrain fixtures` says so.
 2. Nested agent worktrees and virtualenvs under any name were scanned. Now every dot-directory and every
    directory holding a `pyvenv.cfg` is skipped.
 3. A project's pytest `addopts` carried coverage options that would have written coverage files into
@@ -177,7 +177,7 @@ built in. They are not a survey.
 
 ### The front ends (v0.2)
 
-`terrain calls` ran on the five front ends, and `terrain callers` ran from the two FastAPI backends they
+`codeterrain calls` ran on the five front ends, and `codeterrain callers` ran from the two FastAPI backends they
 talk to. The checkouts were read only.
 
 - **benchli:** across the backend's three front ends, 97% of the calls whose path is written statically
@@ -193,7 +193,7 @@ behind its remote's default branch, where the call had already been replaced.
 
 This is the question the join exists to answer, and grep does not answer it. The front end and the
 backend name the same parameter differently, and the route prefix sits in a router call in another file.
-The case also shows the join's limit: it reads working copies. `terrain callers` now warns when a
+The case also shows the join's limit: it reads working copies. `codeterrain callers` now warns when a
 checkout is behind its upstream or its remote's default branch, or has uncommitted changes.
 
 A few percent of calls build their path in a wrapper or a data provider at run time. They are listed as
@@ -247,8 +247,8 @@ itself against the framework's own output.
 
 By category, without product claims:
 
-- **Symbol indexes** (ctags, language servers) answer definition and reference queries. `terrain def`
-  and `terrain refs` overlap with them on purpose, from a cache and without a running server, and add
+- **Symbol indexes** (ctags, language servers) answer definition and reference queries. `codeterrain def`
+  and `codeterrain refs` overlap with them on purpose, from a cache and without a running server, and add
   what they do not: each call's argument shape checked against the signature, the places a name is
   patched, and the split between tests and application code.
 - **LLM-built knowledge graphs** trade exactness for coverage and cost a model run to build and refresh.
@@ -261,7 +261,7 @@ test.
 
 - **The agent-session A/B on a real backend lane.** The token figures are characters. Until the same lane
   runs with and without the tool, we do not claim a token saving for a whole session.
-- **Wiring it in.** No benchli or Mitbolas repository names `terrain` in its checked-in agent
+- **Wiring it in.** No benchli or Mitbolas repository names `codeterrain` in its checked-in agent
   instructions yet; the README has a starting point for them. The A/B and the wiring go together.
 - **Next:** the matched route shown from the front-end side; calls whose path a data provider builds
   from a resource name; backends that are not FastAPI; a background process that keeps the indexes

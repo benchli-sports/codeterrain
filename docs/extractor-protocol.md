@@ -110,7 +110,7 @@ asks the `iter_routes` plugin hook for its routes.
 | `routes[].response_model` | string or null | response model class name |
 | `routes[].also_head` | bool (optional) | on a `GET` record, the route answers `HEAD` too (folded into the `GET` record, not listed on its own); absent means false |
 | `errors[]` | list | apps that failed to import: `error` is a traceback tail, `chain` (optional) lists `Type: message` from the outermost exception to its root cause. One failing app never stops the others. |
-| `notes` | list of string (optional) | informational lines, for example that imports ran inside `moto.mock_aws()`; lines starting with `warning:` (a `Host` route that was not walked) are shown by `terrain doctor` |
+| `notes` | list of string (optional) | informational lines, for example that imports ran inside `moto.mock_aws()`; lines starting with `warning:` (a `Host` route that was not walked) are shown by `codeterrain doctor` |
 
 ## Language packs (in-process, static)
 
@@ -129,7 +129,7 @@ group, named after the language (lowercase letters, digits and `_`), pointing at
 
 Each definition is `{"name", "kind", "line", "doc"}` and each reference `{"name", "line", "scope"}`,
 `scope` naming the definition the reference sits in, or `""`. Names are the language's own full names
-(`aws_s3_bucket.logs`, `var.region`); `terrain def logs` also finds a definition whose last dotted part
+(`aws_s3_bucket.logs`, `var.region`); `codeterrain def logs` also finds a definition whose last dotted part
 is `logs`. `read` is a pure function of the text: it opens no file and runs nothing.
 
 The core walks the repository for the pack's suffixes, skipping what every view skips, caches the
@@ -144,11 +144,11 @@ or `?`), `path` (`""` when not static), `line`, `style` (`client`, `fetch` or `o
 several offer it, and any other by the built-in tokenizer; the facts are cached under the packs and
 versions that read them, so installing, upgrading or removing a pack re-reads the files.
 
-A pack runs in terrain's process. Before any pack is looked up, every import-path entry inside the
+A pack runs in codeterrain's process. Before any pack is looked up, every import-path entry inside the
 repository being read, and an empty or relative one, is removed, so a pack, the parts of a namespace
 package and anything a pack imports later all resolve outside it; a pack whose distribution or module
-still lies inside is refused before it is imported. Only what terrain itself runs from inside the
-checkout (its virtual environment, the folder of its own code) is exempt. `terrain doctor` lists the
+still lies inside is refused before it is imported. Only what codeterrain itself runs from inside the
+checkout (its virtual environment, the folder of its own code) is exempt. `codeterrain doctor` lists the
 packs loaded and the ones refused.
 
 ## Plugin seams (Python reference extractor)

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "codeterrain-typescript"
-version = "0.1.0"
+version = "0.1.1"
 description = "TypeScript and JavaScript for codeterrain: front-end HTTP calls read with tree-sitter."
 readme = "README.md"
 requires-python = ">=3.12"

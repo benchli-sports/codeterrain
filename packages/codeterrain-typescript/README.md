@@ -1,19 +1,18 @@
 # codeterrain-typescript
 
 TypeScript and JavaScript for [codeterrain](https://github.com/benchli-sports/codeterrain): the HTTP
-calls of a front end, read with [tree-sitter](https://tree-sitter.github.io/), in `terrain calls` and
-`terrain callers`.
+calls of a front end, read with [tree-sitter](https://tree-sitter.github.io/), in `codeterrain calls` and
+`codeterrain callers`.
 
 ```
-uv tool install "<path-to-the-codeterrain-checkout>[typescript]"
-terrain calls orders                # GET /v1/orders  src/api/orders.ts:12  client
-terrain callers POST /v1/orders     # the front-end calls that reach a route
+uv tool install "codeterrain[typescript]"
+codeterrain calls orders                # GET /v1/orders  src/api/orders.ts:12  client
+codeterrain callers POST /v1/orders     # the front-end calls that reach a route
 ```
 
-Not published yet: install from a checkout of the codeterrain repository, where this pack lives under
-`packages/`. Once published, `pip install "codeterrain[typescript]"` will do the same.
-`terrain doctor` lists the installed packs (`language packs: typescript 0.1.0`). Without the pack,
-`terrain calls` reads the same files with the core's own tokenizer.
+The `typescript` extra installs this pack beside codeterrain; the command is also installed as
+`terrain`. `codeterrain doctor` lists the installed packs (`language packs: typescript 0.1.1`). Without the pack,
+`codeterrain calls` reads the same files with the core's own tokenizer.
 
 Why install it: it is both more accurate and faster than the tokenizer. It parses the full syntax
 and resolves names through scopes, and a cold read takes about 0.6 to 0.7 times the tokenizer's time,

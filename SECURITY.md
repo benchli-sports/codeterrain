@@ -11,16 +11,16 @@ What codeterrain does guarantee is about its own, parent process:
 1. **It never executes target code.** The static tier (`fixtures`, `fixture`) reads files with `ast`
    only. Every program it starts (`git`, the target interpreter) is resolved to an absolute path from
    the absolute `PATH` entries, never from the current directory, never a `.bat` or `.cmd` on Windows,
-   and never a program a bare name finds inside the target repository or, for `terrain callers`,
+   and never a program a bare name finds inside the target repository or, for `codeterrain callers`,
    inside any front-end checkout it reads, whichever checkout it is asking about. The `git status` that
-   `terrain callers` runs in each checkout switches `core.fsmonitor` off, so a command named in that
+   `codeterrain callers` runs in each checkout switches `core.fsmonitor` off, so a command named in that
    checkout's `.git/config` is not run, and takes no optional locks, so it writes nothing there.
-   A language pack runs in terrain's own process. Before any pack is looked up, every import-path
+   A language pack runs in codeterrain's own process. Before any pack is looked up, every import-path
    entry inside the repository being read (and an empty or relative one) is removed, so neither a
    pack, the parts of a namespace package nor anything a pack imports later resolves there; a pack
-   whose distribution or module still lies inside it is refused before it is imported. What terrain
+   whose distribution or module still lies inside it is refused before it is imported. What codeterrain
    itself runs from is the exception, when it lies inside the checkout: its virtual environment and
-   the folder its own code is imported from. A checkout inside terrain's environment is not trusted.
+   the folder its own code is imported from. A checkout inside codeterrain's environment is not trusted.
 2. **It never hands the child anything you did not opt into.** The child's environment is an allowlist;
    proxies, `PYTEST_ADDOPTS` and `PYTEST_PLUGINS` are dropped; AWS credentials are dummies; the home and
    per-user data directories point at an empty directory; git reads no system or global config and has
@@ -78,7 +78,7 @@ passes the check.
 |---|---|
 | **Guaranteed** (each has a regression test) | the parent never runs target code or a repository-shipped executable; the environment allowlist; repository config cannot widen it; git in the child has no credential helper; no default writes into the target; tree kill on timeout and of stragglers after exit (except a POSIX grandchild that started its own session); redaction of the values codeterrain knows; terminal escaping; path confinement |
 | **Best-effort** | the network guard. It blocks accidental network calls from Python code in the child, and is not a boundary against hostile code: non-Python subprocesses, isolated-mode Python children, a freshly loaded `_socket`, target code that undoes the patch, `getfqdn`, the C socket class and C extensions are not covered. [docs/sandbox.md](docs/sandbox.md) lists every gap. |
-| **Not covered** | secrets codeterrain does not know (a value the target reads from a file and echoes); loopback services, which are reachable by design; a POSIX grandchild that started its own session; hostile code reading the real home by absolute path or an OS credential store; a child that rewrites the cache it worked out from the root; a crash of a native parser a language pack uses (the TypeScript pack's tree-sitter parses front-end source in terrain's process: it runs nothing from that source, and a file over 2,000,000 bytes is not read, but a parser fault would end the command rather than report the file) |
+| **Not covered** | secrets codeterrain does not know (a value the target reads from a file and echoes); loopback services, which are reachable by design; a POSIX grandchild that started its own session; hostile code reading the real home by absolute path or an OS credential store; a child that rewrites the cache it worked out from the root; a crash of a native parser a language pack uses (the TypeScript pack's tree-sitter parses front-end source in codeterrain's process: it runs nothing from that source, and a file over 2,000,000 bytes is not read, but a parser fault would end the command rather than report the file) |
 
 ## Reporting a vulnerability
 

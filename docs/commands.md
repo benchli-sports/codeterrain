@@ -1,6 +1,6 @@
 # Commands
 
-Every `terrain` command, its options and what each one reads.
+Every `codeterrain` command, its options and what each one reads.
 
 ## Install
 
@@ -13,45 +13,45 @@ uv tool install "<path-to-this-checkout>[typescript]"  # front-end calls read wi
 ```
 
 Python 3.12 or newer. The only runtime dependency is `pluggy`. Language packs, in
-[packages/](../packages/), are extras: Terraform adds `.tf` files to `terrain def` and `terrain refs`;
-TypeScript reads the front-end files of `terrain calls` and `terrain callers` with tree-sitter (its
+[packages/](../packages/), are extras: Terraform adds `.tf` files to `codeterrain def` and `codeterrain refs`;
+TypeScript reads the front-end files of `codeterrain calls` and `codeterrain callers` with tree-sitter (its
 only native dependency, with prebuilt wheels) in place of the built-in tokenizer.
 
-`terrain` runs the import and pytest tier in the **target's** interpreter, not its own. Point
+`codeterrain` runs the import and pytest tier in the **target's** interpreter, not its own. Point
 `--python` (or `CODETERRAIN_PYTHON`) at the target's virtualenv interpreter, for example
 `--python .venv/bin/python` (`.venv\Scripts\python.exe` on Windows). That environment needs `pytest`
 for `setup-order` and `pluggy` for `routes` (the route walker imports it; it is not copied into the
-sandbox because it would shadow the pluggy that pytest itself uses). `terrain doctor` prints a hint
+sandbox because it would shadow the pluggy that pytest itself uses). `codeterrain doctor` prints a hint
 when `--python` is codeterrain's own interpreter and the target has a `.venv`.
 
 ## Commands
 
 ```
-terrain fixtures [substring] [--autouse] [--scope SCOPE]
-terrain fixture NAME
-terrain doctor
-terrain setup-order NODEID
-terrain routes [substring] [--app APP] [--access ACCESS]
-terrain route METHOD PATH
-terrain calls [substring] [--method METHOD] [--unresolved]
-terrain callers [METHOD PATH] [--unmatched]
-terrain def [NAME] [--kind KIND]
-terrain refs NAME [--tests|--code] [--by-name]
-terrain importers MODULE [--tests|--code]
-terrain imports MODULE
-terrain impact NAME [--depth N]
-terrain refresh [fixtures|calls|order|routes|code|languages]
-terrain --version
+codeterrain fixtures [substring] [--autouse] [--scope SCOPE]
+codeterrain fixture NAME
+codeterrain doctor
+codeterrain setup-order NODEID
+codeterrain routes [substring] [--app APP] [--access ACCESS]
+codeterrain route METHOD PATH
+codeterrain calls [substring] [--method METHOD] [--unresolved]
+codeterrain callers [METHOD PATH] [--unmatched]
+codeterrain def [NAME] [--kind KIND]
+codeterrain refs NAME [--tests|--code] [--by-name]
+codeterrain importers MODULE [--tests|--code]
+codeterrain imports MODULE
+codeterrain impact NAME [--depth N]
+codeterrain refresh [fixtures|calls|order|routes|code|languages]
+codeterrain --version
 ```
 
 `--scope` takes `session`, `package`, `module`, `class` or `function`, or the letter `S`, `P`, `M`, `C`
 or `F`. `--app` keeps the apps whose `module:attr` contains the text; `--access` keeps one access class
-from the route manifest. `terrain routes TEXT` keeps the routes whose path or handler contains the
+from the route manifest. `codeterrain routes TEXT` keeps the routes whose path or handler contains the
 text; when none does, it lists the routes whose handler reads or calls, in its own body, a name
-containing it (`terrain routes legal` finds the handler that reads `LEGAL_PRIVACY_VERSION`), from the
+containing it (`codeterrain routes legal` finds the handler that reads `LEGAL_PRIVACY_VERSION`), from the
 code index; `--json` lists them as `handlers_reading`, with `handlers_reading_truncated` when the search
 stopped early. `NODEID` is a pytest node id; a function, class or file matches its tests.
-`terrain calls` lists the HTTP calls in `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`, `.mts` and `.cts`
+`codeterrain calls` lists the HTTP calls in `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`, `.mts` and `.cts`
 files: `<client>.get(path)` and the other verbs, `fetch(path, {method})` and object literals with a
 `url:` path (`useCustom({url, method})`, axios configs). A path written as a string, a template (`${id}`
 shows as `{}`), a `+` concatenation or a same-file `const` is resolved; a call whose path is only known at
@@ -63,7 +63,7 @@ function is that function's), and a file with a syntax error is reported with it
 there unresolved. `refresh` with no argument rebuilds every view and the code index; `refresh
 languages` rebuilds the views of the installed language packs.
 
-`terrain def NAME` and `terrain refs NAME` read the code index: every `.py` file in the repository,
+`codeterrain def NAME` and `codeterrain refs NAME` read the code index: every `.py` file in the repository,
 application code and tests alike, except folders that packages were installed into (a folder holding a
 `*.dist-info`, or an `*.egg-info` that records installed files or has no source package beside it,
 such as a vendored deployment bundle; an editable install's egg-info beside its package, matched by
@@ -73,7 +73,7 @@ through no link). `NAME` is a full dotted name
 a package resolves to where it is defined, and an unknown name lists similar ones. `--kind KIND`
 keeps only definitions of one kind (`class`, `function`, `method`, or a language pack's: `module`,
 `provider`, `required_provider`); without a name it lists every one of them, so
-`terrain def --kind module` is a Terraform checkout's module tree, each call with its file and
+`codeterrain def --kind module` is a Terraform checkout's module tree, each call with its file and
 `source`. An unknown kind lists the kinds there are. `src/` is dropped
 from module names unless it has its own `__init__.py`. Names start at the repository root, so two
 apps' modules never collide; code in a folder with its own `pyproject.toml`, `setup.py` or
@@ -101,15 +101,15 @@ index does not know is looked up in that folder. `refs` lists:
 `--tests` and `--code` keep only test files or only the rest. A test file is a `test_*.py` or
 `*_test.py`, or a file under `test_paths`.
 
-`terrain importers MODULE` lists every import of a Python module, or of a name from it, in other
+`codeterrain importers MODULE` lists every import of a Python module, or of a name from it, in other
 files: `import app.orders`, `from app.orders import create`, `from app import orders`, a
 relative import, a star import (`app.orders.*`), or one inside a function, each with its file:line, scope, what it imports and
 the local name (`--tests` and `--code` as for `refs`). `MODULE` is a full dotted name or its last
 parts (`orders`); a namespace package (no `__init__.py`) counts too. A plain `import app.orders` binds `app`, so it is listed for the package
-`app`. `terrain imports MODULE` lists what the module imports, resolved to full names. `def`
+`app`. `codeterrain imports MODULE` lists what the module imports, resolved to full names. `def`
 and `refs` on a module name point here.
 
-`terrain impact NAME` joins the code index to the fixture index: which tests run a name. It walks
+`codeterrain impact NAME` joins the code index to the fixture index: which tests run a name. It walks
 out from the definition through its callers, three levels by default (`--depth`, at most 10). A call
 inside a test function reaches that test, and the copies of a test method that pytest collects in
 the test classes inheriting it, each with the marks pytest runs it with there (the method's own,
@@ -138,15 +138,15 @@ names: `aws_s3_bucket.logs`, `data.aws_ami.base`, `module.vpc`, `var.region`, `l
 it. Each reference is shown with the block it sits in. See
 [the pack's README](../packages/codeterrain-terraform/README.md).
 
-`terrain callers`, run in the backend, joins the calls of the front ends listed in `client_repos` to the
+`codeterrain callers`, run in the backend, joins the calls of the front ends listed in `client_repos` to the
 routes view: with no argument it lists every call with the route it hits and a one-line summary
 (`40 calls in 2 front ends: 34 hit a route, 2 hit none, 4 have no static path`); with `METHOD PATH`
 only the calls of that route; `--unmatched` only calls with a static path that hit no route, which is
 where a front end calls an endpoint the backend does not have. A single argument that is not an HTTP
-method is taken for a Python name and answered by `terrain refs`, with a note saying so. Paths are compared segment by segment
+method is taken for a Python name and answered by `codeterrain refs`, with a note saying so. Paths are compared segment by segment
 with the query string dropped: a route parameter matches any segment (`{x:path}` the rest), a `{}` in a
 call matches any text in its segment, the most literal match wins and then registration order. Each
-front end's path gets its `path_prefix` first. Because the join reads working copies, `terrain callers`
+front end's path gets its `path_prefix` first. Because the join reads working copies, `codeterrain callers`
 prints a warning for the backend or any front end whose checkout is behind its upstream branch or the
 remote's default branch (`origin/HEAD`, else `origin/main` or `origin/master`), as of its last fetch, or
 has uncommitted changes, and `--json` reports `backend_state` and each client's `state`. It runs `git status` there with no optional locks, so nothing is written to the checkout, and

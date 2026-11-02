@@ -16,7 +16,7 @@ The two tiers, the cache, and the extractor programs.
   and a file is re-read only when its `(mtime_ns, size)` changed.
 - **Import and pytest tier**: setup order and routes. These import your application and run
   `pytest --collect-only` in a sandboxed subprocess. The cached result is served at once, stamped
-  `stale: N files changed since <time>` when files moved, and refreshed by `terrain refresh` or
+  `stale: N files changed since <time>` when files moved, and refreshed by `codeterrain refresh` or
   `--fresh`. It never blocks otherwise.
 
 The cache lives in `<git-common-dir>/codeterrain/`, so one repository has one cache shared by all its
@@ -27,13 +27,13 @@ git cannot be run) it lives in a per-user cache directory instead
 `CODETERRAIN_CACHE_DIR` override both. On POSIX the directories codeterrain creates there are `0700` and
 its files `0600`, whatever the umask; on Windows the per-user profile's permissions apply.
 
-**Worktrees.** `terrain` answers about the checkout it runs in (the current directory, or `--root`),
+**Worktrees.** `codeterrain` answers about the checkout it runs in (the current directory, or `--root`),
 uncommitted changes included. Run it from the worktree you are editing: an answer from the main
 checkout does not see a worktree's changes. One cache directory, the default or one
 `CODETERRAIN_CACHE_DIR`, can serve every worktree of a repository: parsed files are shared by content,
 and the file memo, the code index and the views are kept per checkout. When the repository has other
 worktrees, each answer ends with a line on stderr naming the checkout it came from, the JSON envelope
-carries `root`, `terrain doctor` lists the other checkouts, and `--root` pointing at another checkout
+carries `root`, `codeterrain doctor` lists the other checkouts, and `--root` pointing at another checkout
 than the current directory's is flagged.
 
 Every cached file carries a format number and the codeterrain version; a file from another version, with
@@ -41,7 +41,7 @@ a field missing or unreadable, is discarded and rebuilt. Every view is signed wi
 it is written, so a warm answer does not check every row again; an unsigned or edited view is checked
 first (see [SECURITY.md](../SECURITY.md)). A setup-order or routes view also records the
 config, target interpreter (its venv config and installed distributions) and codeterrain version it was
-built under: if any of those changed it is not served, `terrain doctor` shows `needs refresh`, and the
+built under: if any of those changed it is not served, `codeterrain doctor` shows `needs refresh`, and the
 next query rebuilds it. The staleness count also watches `pyproject.toml`, `pytest.ini`, `setup.cfg`,
 `tox.ini` and every `conftest.py`.
 

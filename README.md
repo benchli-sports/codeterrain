@@ -5,7 +5,7 @@
 <h1 align="center">codeterrain</h1>
 
 <p align="center">
-  <b><code>terrain</code>: answers about your code, in under a second.</b><br>
+  <b><code>codeterrain</code>: answers about your code, in under a second.</b><br>
   For coding agents, and the people working beside them.
 </p>
 
@@ -29,7 +29,7 @@ fixtures a test really gets, where a route is handled, who calls a function, whi
 it. The answers are in the code, but finding them takes rounds of grep and file reads, and a
 wrong guess costs a review round.
 
-`terrain` answers those questions from a cache, the way the framework itself would answer them.
+`codeterrain` answers those questions from a cache, the way the framework itself would answer them.
 
 | | |
 |:---|:---|
@@ -41,23 +41,24 @@ wrong guess costs a review round.
 ## Quick start
 
 ```sh
-uv tool install codeterrain                 # Python 3.12+; the only dependency is pluggy
+uv tool install codeterrain     # Python 3.12+; the only dependency is pluggy
 # or "codeterrain[terraform]" to add the Terraform language pack, "codeterrain[typescript]"
 # to read front-end calls with tree-sitter, "codeterrain[terraform,typescript]" for both
 cd your-repo
-terrain doctor                              # what it found, and which config it used
-terrain fixtures                            # every pytest fixture, and which definition wins where
+codeterrain doctor              # what it found, and which config it used
+codeterrain fixtures            # every pytest fixture, and which definition wins where
 ```
 
-The command is `terrain`; `codeterrain` is the same command, for a machine where another tool
-already installs a `terrain`. To work on codeterrain itself, install from a checkout instead:
+The same command is also installed as `terrain`, a shorter name. Another tool on PyPI installs a
+`terrain` command too; with both installed, the last one wins, while `codeterrain` is always this
+one. To work on codeterrain itself, install from a checkout instead:
 `uv tool install --editable <path-to-checkout>`.
 
 Ask about a function: where it is called, how each call passes its arguments, and which tests patch it.
-This is `terrain` run on its own source:
+This is `codeterrain` run on its own source:
 
 ```console
-$ terrain refs is_test_module
+$ codeterrain refs is_test_module
 function codeterrain.fixtures_static.is_test_module(rel)  src/codeterrain/fixtures_static.py:327
 6 calls (6 in code, 0 in tests), 0 with a shape problem, 0 used as a value, 0 patched
 file:line                                 in                             shape         note
@@ -74,7 +75,7 @@ Ask which tests statically reach it, through its callers and the fixtures that c
 empty list does not prove the change is untested:
 
 ```console
-$ terrain impact is_test_module --depth 2
+$ codeterrain impact is_test_module --depth 2
 17 tests reach codeterrain.fixtures_static.is_test_module (0 directly), through 15 callers within 2 levels; 2 tests patch it …
 test                                                 depth  how                               via
 tests/test_cli.py::test_a_handler_is_matched_by_…    2      call at tests/test_cli.py:1186    …update <- …is_test_module
@@ -85,7 +86,7 @@ tests/test_cli.py::test_a_route_text_that_matches_…  2      call at tests/test
 Ask what a fixture is and what depends on it (from the sample repository in `tests/sample_repo`):
 
 ```console
-$ terrain fixture db
+$ codeterrain fixture db
 name: db
 scope: session
 autouse: no
@@ -107,24 +108,24 @@ for the full data.
 
 ## Telling your agent
 
-An agent uses `terrain` when its instructions say when to. A starting point for `AGENTS.md` or
+An agent uses `codeterrain` when its instructions say when to. A starting point for `AGENTS.md` or
 `CLAUDE.md`:
 
 ```markdown
-## Code structure: ask terrain first
+## Code structure: ask codeterrain first
 
-Before grepping or reading files for one of these, run `terrain` in the repository root
+Before grepping or reading files for one of these, run `codeterrain` in the repository root
 (local, under a second when warm; add `--json` for the full data):
 
-- where a name is defined: `terrain def NAME`
-- who calls, passes or patches it: `terrain refs NAME`
-- which tests statically reach it: `terrain impact NAME` (a starting point, not proof of coverage)
-- which fixtures a test gets, in order: `terrain setup-order NODEID`
-- a fixture and what depends on it: `terrain fixture NAME`
-- where a route is handled: `terrain route METHOD PATH`
-- a front end's HTTP calls, and the backend routes they hit: `terrain calls`, `terrain callers`
+- where a name is defined: `codeterrain def NAME`
+- who calls, passes or patches it: `codeterrain refs NAME`
+- which tests statically reach it: `codeterrain impact NAME` (a starting point, not proof of coverage)
+- which fixtures a test gets, in order: `codeterrain setup-order NODEID`
+- a fixture and what depends on it: `codeterrain fixture NAME`
+- where a route is handled: `codeterrain route METHOD PATH`
+- a front end's HTTP calls, and the backend routes they hit: `codeterrain calls`, `codeterrain callers`
 
-When terrain says it cannot resolve something, fall back to grep. `setup-order` and the route
+When codeterrain says it cannot resolve something, fall back to grep. `setup-order` and the route
 commands import the code: use them only on code you trust.
 ```
 
@@ -132,17 +133,17 @@ commands import the code: use them only on code you trust.
 
 | Question | Command | What grep can't tell you |
 |:---|:---|:---|
-| Where is this defined? | `terrain def NAME` | Resolves a re-export to the real definition |
-| Who calls it, passes it, patches it? | `terrain refs NAME` | Follows imports and aliases, flags calls that don't fit the signature, and separates tests that patch it out |
-| Who imports this module, and what does it import? | `terrain importers MODULE`, `terrain imports MODULE` | Every import of it or of a name from it, relative imports resolved |
-| Which tests statically reach it? | `terrain impact NAME` | Walks callers and fixtures the way pytest resolves them; what it cannot follow statically is listed, not dropped |
-| Which fixtures does a test get, in what order? | `terrain setup-order NODEID` | pytest's own resolution, overrides and scopes included |
-| What fixtures exist, and who uses one? | `terrain fixtures`, `terrain fixture NAME` | Which definition wins where, and every dependent |
-| Where is a route handled, with what access? | `terrain routes`, `terrain route METHOD PATH` | Prefixes from router calls in other files, joined to your access manifest |
-| Which HTTP calls does a front end make? | `terrain calls` | Paths built from templates, constants and concatenation |
-| Which backend route does each call hit? | `terrain callers` | Front-end calls matched to backend routes across repositories |
-| Where is a Terraform resource, variable or module, and who reads it? | `terrain def NAME`, `terrain refs NAME` (Terraform pack) | Terraform's own names (`aws_s3_bucket.logs`, `var.region`, `module.vpc`) and the block each reference sits in |
-| What is the module tree, and which providers are pinned? | `terrain def --kind module`, `terrain def --kind required_provider` | Every module call with its source and version; provider aliases and what selects them |
+| Where is this defined? | `codeterrain def NAME` | Resolves a re-export to the real definition |
+| Who calls it, passes it, patches it? | `codeterrain refs NAME` | Follows imports and aliases, flags calls that don't fit the signature, and separates tests that patch it out |
+| Who imports this module, and what does it import? | `codeterrain importers MODULE`, `codeterrain imports MODULE` | Every import of it or of a name from it, relative imports resolved |
+| Which tests statically reach it? | `codeterrain impact NAME` | Walks callers and fixtures the way pytest resolves them; what it cannot follow statically is listed, not dropped |
+| Which fixtures does a test get, in what order? | `codeterrain setup-order NODEID` | pytest's own resolution, overrides and scopes included |
+| What fixtures exist, and who uses one? | `codeterrain fixtures`, `codeterrain fixture NAME` | Which definition wins where, and every dependent |
+| Where is a route handled, with what access? | `codeterrain routes`, `codeterrain route METHOD PATH` | Prefixes from router calls in other files, joined to your access manifest |
+| Which HTTP calls does a front end make? | `codeterrain calls` | Paths built from templates, constants and concatenation |
+| Which backend route does each call hit? | `codeterrain callers` | Front-end calls matched to backend routes across repositories |
+| Where is a Terraform resource, variable or module, and who reads it? | `codeterrain def NAME`, `codeterrain refs NAME` (Terraform pack) | Terraform's own names (`aws_s3_bucket.logs`, `var.region`, `module.vpc`) and the block each reference sits in |
+| What is the module tree, and which providers are pinned? | `codeterrain def --kind module`, `codeterrain def --kind required_provider` | Every module call with its source and version; provider aliases and what selects them |
 
 Every option is in **[docs/commands.md](docs/commands.md)**.
 
@@ -186,7 +187,7 @@ than the grep; there the gain is the exact order, which grep can't show.
 
 ### In the field
 
-Coding agents working on real tasks logged each `terrain` lookup: what they asked, whether the answer
+Coding agents working on real tasks logged each `codeterrain` lookup: what they asked, whether the answer
 was right, and what they would have done instead. 160 lookups, 26 October to 2 November 2026, across
 the code bases above. Each agent judged its own answer against what it then read or ran; nobody
 checked the judgements independently.
@@ -213,21 +214,21 @@ An estimate from the two measurements above, not an A/B experiment:
 
 | Step | Figure |
 |:---|---:|
-| Reading saved on a question `terrain` answers, large backend (4.4x to 6.9x fewer characters) | 77% to 86% |
+| Reading saved on a question `codeterrain` answers, large backend (4.4x to 6.9x fewer characters) | 77% to 86% |
 | Lookups answered fully, in the field | 74% |
 | Lookups answered partly (counted at half the saving) | 10% |
 | **Inferred share of lookup reading saved on a large Python backend** | **about 61% to 68%** |
 
 Lookups are only part of a session: reasoning, editing and test runs are untouched, and small code
 bases save little. Tokens here are characters divided by four. A session-level A/B, the same lane run
-with and without `terrain`, is the next measurement. The method and the per-repository results are in
+with and without `codeterrain`, is the next measurement. The method and the per-repository results are in
 [docs/why-codeterrain.md](docs/why-codeterrain.md).
 
 ## How it works
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/benchli-sports/codeterrain/main/docs/img/architecture-dark.svg">
-  <img src="https://raw.githubusercontent.com/benchli-sports/codeterrain/main/docs/img/architecture-light.svg" alt="How it works: a terrain question is answered from a cache per repository, keyed on content, in under a second when warm. The static tier (fixtures and tests and the code index with Python's ast, front-end calls with tree-sitter or a tokenizer) fills it from changed files only and never runs the code. The import tier, a sandboxed subprocess, fills it on refresh with the setup order and the routes." width="760">
+  <img src="https://raw.githubusercontent.com/benchli-sports/codeterrain/main/docs/img/architecture-light.svg" alt="How it works: a codeterrain question is answered from a cache per repository, keyed on content, in under a second when warm. The static tier (fixtures and tests and the code index with Python's ast, front-end calls with tree-sitter or a tokenizer) fills it from changed files only and never runs the code. The import tier runs the code in a guarded subprocess and fills it on refresh with the setup order and the routes." width="760">
 </picture>
 
 - **The static tier** reads source with Python's `ast`, and front-end files with tree-sitter when the
