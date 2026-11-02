@@ -10,10 +10,10 @@ What codeterrain does not see or bounds on purpose.
   plugins or `pytest_plugins` are not seen statically (they do appear in `setup-order`).
 - FastAPI route walking uses two private helpers of FastAPI and pytest, each isolated in one function with a
   version-guarded fallback and a test.
-- `Host` routes are not walked (`terrain doctor` warns when it meets one). FastAPI before 0.137 drops
+- `Host` routes are not walked (`codeterrain doctor` warns when it meets one). FastAPI before 0.137 drops
   mounts inside included routers itself, so they cannot be listed there.
 - The view key covers the target interpreter's own site-packages; editable sibling packages and the user
-  site-packages are not keyed, so run `terrain refresh` after changing them.
+  site-packages are not keyed, so run `codeterrain refresh` after changing them.
 - The network guard does not see non-Python subprocesses, isolated-mode Python children, uvloop, aiodns
   or network access from C extensions (see [the sandbox](sandbox.md)).
 - On POSIX a grandchild that starts its own session can survive the run; on Windows a process escapes
@@ -26,11 +26,11 @@ What codeterrain does not see or bounds on purpose.
 - The socket guard is a best-effort one: Python's `getfqdn` swallows the guard error from its reverse
   lookup, and the original C socket class (`socket.socket.__mro__[1]`) cannot be patched.
 - The static object store only grows with edits; old content hashes are not pruned yet.
-- With the TypeScript pack installed, `terrain calls` reads JavaScript and TypeScript with
+- With the TypeScript pack installed, `codeterrain calls` reads JavaScript and TypeScript with
   tree-sitter. It still reads one file at a time: a path built in another module, by a wrapper
   function or from a resource name that a data provider turns into a URL is listed as unresolved, and
   a call inside a syntax error is unresolved.
-- Without the pack, `terrain calls` reads JavaScript and TypeScript with a tokenizer written for this
+- Without the pack, `codeterrain calls` reads JavaScript and TypeScript with a tokenizer written for this
   purpose, not a parser. It knows strings, templates, comments, regex literals and brackets, not the
   grammar, so:
   - It reads one file at a time. A path built in another module, by a wrapper function or from a
@@ -57,22 +57,22 @@ What codeterrain does not see or bounds on purpose.
   reference.
 - A fetch of a static file the front end serves itself (`/config.json`) is listed as a call and hits
   no route.
-- `terrain refs` resolves names statically, file by file. A call on a value whose type is only known
+- `codeterrain refs` resolves names statically, file by file. A call on a value whose type is only known
   at run time (a parameter, a function's return value, a dependency-injected object) is a by-name
   candidate, not a reference; `getattr`, string dispatch and names built at run time are not seen; code
   inside a string (a script run in a subprocess) is not code. A module-level variable is a definition;
   what it holds is followed only when its class made it (`settings = Settings()`) or its annotation
   names one, read at its last assignment in its file, and an alias of a name is followed one level.
-- `terrain impact` follows the calls `terrain refs` resolves, so it inherits those limits, and it does
+- `codeterrain impact` follows the calls `codeterrain refs` resolves, so it inherits those limits, and it does
   not follow a name used as a value: a FastAPI dependency (`Depends(get_user)`) reaches the routes
   that declare it, and the tests that call those routes over HTTP, only at run time. A call inside a
   nested function counts as a call from the function that holds it. Fixture visibility follows
   pytest's own order, but a fixture supplied by `pytest_generate_tests`, a plugin's hooks or a
   parametrized indirect value is not seen. It follows at most 2,000 callers, expands at most 2,000
   fixtures and checks at most 1,000,000 fixture requests.
-- `terrain callers` joins FastAPI routes only; an API served by anything else has no routes view to
+- `codeterrain callers` joins FastAPI routes only; an API served by anything else has no routes view to
   join to.
-- `terrain callers` reads the working copies of the backend and the front ends. A checkout that is behind
+- `codeterrain callers` reads the working copies of the backend and the front ends. A checkout that is behind
   its remote, or holds uncommitted work, can show a gap that the deployed code does not have, or hide one
   that it does. It warns about both, but "behind" is only as fresh as that checkout's last fetch:
   nothing is fetched.

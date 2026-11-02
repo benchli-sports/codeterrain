@@ -1,6 +1,25 @@
 # Changelog
 
-## 0.3.0 (unreleased)
+## 0.3.1 (2026-11-02)
+
+- The README's diagram of how it works is an image, as the charts are: PyPI does not render
+  Mermaid, so the 0.3.0 page showed its source.
+- `codeterrain` is the command the docs use; `terrain` stays installed as a shorter name. Another
+  tool on PyPI installs a `terrain` command, and with both installed the last one wins.
+- `codeterrain-terraform` 0.2.1 and `codeterrain-typescript` 0.1.1: their READMEs, which are their
+  PyPI pages, install from PyPI instead of saying the packs are not published. No code change.
+- The README leads with `uv tool install codeterrain` from PyPI, and has a starting point for an
+  agent's instructions. Its claims are narrowed to what is measured: no "exact answers" headline;
+  `impact` lists the tests that statically reach a name, not the tests that would catch a change;
+  character counts measure an answer, not a session; the import tier's safeguards stop accidents,
+  not hostile code, so it is for code you trust. The field figures cover all 160 logged lookups,
+  with their period and how they were judged, two marked wrong among them.
+- SECURITY.md and the rationale no longer describe the repository as private or a public release
+  as future work. SECURITY.md's third guarantee says what it covers: pytest and its known plugins
+  do not write into the repository by default; target code that opens a file by absolute path still
+  can.
+
+## 0.3.0 (2026-11-02)
 
 - `terrain refs` following an alias counts a read after an assignment on the same line
   (`ALIAS = VALUE; print(ALIAS)`), and still not one inside the assignment's right-hand side.

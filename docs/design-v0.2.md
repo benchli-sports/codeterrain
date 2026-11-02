@@ -70,11 +70,11 @@ front-end checkouts are often read-only and have no `codeterrain.toml`.
 
 ## Milestones
 
-1. The tokenizer and call extractor, `terrain calls` in one repository. Tests cover the patterns the survey
+1. The tokenizer and call extractor, `codeterrain calls` in one repository. Tests cover the patterns the survey
    found, including those a regex gets wrong (nested generics, multi-line calls, nested templates, comments,
    type-only mentions).
 2. `codeterrain.toml`, `path_prefix`, and same-file constant resolution.
-3. The join: `terrain callers [METHOD PATH] [--unmatched]` in the backend, from the routes view and
+3. The join: `codeterrain callers [METHOD PATH] [--unmatched]` in the backend, from the routes view and
    `client_repos`, with a warning for any checkout that is behind its remote or has uncommitted changes.
    Showing the matched route from the front-end side (which needs the backend named there) is left for
    later.
@@ -109,4 +109,4 @@ The choice was made on two criteria: speed and accuracy.
 
 The pack is therefore the reader whenever it is installed. The tokenizer stays as the reader when
 the pack is missing: removing it would gain neither speed nor accuracy, since it never runs beside
-the pack, and it keeps `terrain calls` working on an install whose only dependency is `pluggy`.
+the pack, and it keeps `codeterrain calls` working on an install whose only dependency is `pluggy`.

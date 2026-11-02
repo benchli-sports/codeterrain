@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "codeterrain"
-version = "0.3.0"
+version = "0.3.1"
 description = "terrain: answers about your code in under a second. Local, LLM-free structure facts for coding agents; Python first."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -39,6 +39,7 @@ Issues = "https://github.com/benchli-sports/codeterrain/issues"
 
 [project.scripts]
 terrain = "codeterrain.cli:main"
+codeterrain = "codeterrain.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/codeterrain"]

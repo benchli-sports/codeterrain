@@ -1,20 +1,19 @@
 # codeterrain-terraform
 
 Terraform for [codeterrain](https://github.com/benchli-sports/codeterrain): the definitions and
-references of `.tf` files, in `terrain def` and `terrain refs`.
+references of `.tf` files, in `codeterrain def` and `codeterrain refs`.
 
 ```
-uv tool install "<path-to-the-codeterrain-checkout>[terraform]"
-terrain def logs                    # resource aws_s3_bucket.logs  infra/storage.tf:12
-terrain refs var.region             # every expression that reads it, and the block it sits in
-terrain def --kind module           # every module call, with its file, source and version
-terrain def --kind required_provider  # every pinned provider and its version constraint
-terrain refs provider.aws.east      # the resources and module calls that select that provider
+uv tool install "codeterrain[terraform]"
+codeterrain def logs                    # resource aws_s3_bucket.logs  infra/storage.tf:12
+codeterrain refs var.region             # every expression that reads it, and the block it sits in
+codeterrain def --kind module           # every module call, with its file, source and version
+codeterrain def --kind required_provider  # every pinned provider and its version constraint
+codeterrain refs provider.aws.east      # the resources and module calls that select that provider
 ```
 
-Not published yet: install from a checkout of the codeterrain repository, where this pack lives under
-`packages/`. Once published, `pip install "codeterrain[terraform]"` will do the same.
-`terrain doctor` lists the installed packs (`language packs: terraform 0.2.0`).
+The `terraform` extra installs this pack beside codeterrain; the command is also installed as
+`terrain`. `codeterrain doctor` lists the installed packs (`language packs: terraform 0.2.1`).
 
 Names follow Terraform's own references: `aws_s3_bucket.logs`, `data.aws_ami.base`, `module.vpc`,
 `var.region`, `local.tags`, `output.url`, and `provider.aws` for both an entry of

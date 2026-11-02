@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="760" height="414" viewBox="0 0 760 414" font-family='system-ui, -apple-system, "Segoe UI", sans-serif' role="img">
 <title>Characters an agent reads to get the answer</title>
-<desc>Backend: autouse fixtures of a test: grep and read 100, terrain 23; Backend: a route's handler and access: grep and read 100, terrain 14; Backend: who uses the main fixture: grep and read 100, terrain 67; Analytics: who uses the main fixture: grep and read 100, terrain 11; Analytics: fixtures of a test: grep and read 100, terrain 29; Small suite: fixtures of a test: grep and read 100, terrain 125</desc>
+<desc>Backend: autouse fixtures of a test: grep and read 100, codeterrain 23; Backend: a route's handler and access: grep and read 100, codeterrain 14; Backend: who uses the main fixture: grep and read 100, codeterrain 67; Analytics: who uses the main fixture: grep and read 100, codeterrain 11; Analytics: fixtures of a test: grep and read 100, codeterrain 29; Small suite: fixtures of a test: grep and read 100, codeterrain 125</desc>
 <rect width="760" height="414" rx="8" fill="#1a1a19"/>
 <text x="24.0" y="30.0" fill="#f0efec" font-size="16" font-weight="600" text-anchor="start" dominant-baseline="middle">Characters an agent reads to get the answer</text>
 <text x="24.0" y="52.0" fill="#c3c2b7" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Indexed: today's grep-and-read = 100. Lower is better.</text>
 <rect x="24.0" y="69.0" width="10" height="10" rx="2" fill="#d95926"/>
 <text x="40.0" y="74.0" fill="#c3c2b7" font-size="12" font-weight="400" text-anchor="start" dominant-baseline="middle">grep and read, today (= 100)</text>
 <rect x="248.8" y="69.0" width="10" height="10" rx="2" fill="#3987e5"/>
-<text x="264.8" y="74.0" fill="#c3c2b7" font-size="12" font-weight="400" text-anchor="start" dominant-baseline="middle">terrain</text>
+<text x="264.8" y="74.0" fill="#c3c2b7" font-size="12" font-weight="400" text-anchor="start" dominant-baseline="middle">codeterrain</text>
 <line x1="250.0" y1="90.0" x2="250.0" y2="374.0" stroke="#383835" stroke-width="1"/>
 <text x="250.0" y="388.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">0</text>
 <line x1="328.0" y1="90.0" x2="328.0" y2="374.0" stroke="#2c2c2a" stroke-width="1"/>
