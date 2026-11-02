@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="516" viewBox="0 0 760 516" font-family='system-ui, -apple-system, "Segoe UI", sans-serif' role="img">
+<title>What each tool documents answering</title>
+<desc>Twelve tools by nine question types. Only codeterrain documents answers in all four framework columns; no other tool documents front-end calls matched to routes or pytest fixture resolution, and one other asks pytest itself.</desc>
+<rect width="760" height="516" rx="8" fill="#1a1a19"/>
+<text x="24.0" y="30.0" fill="#f0efec" font-size="16" font-weight="600" text-anchor="start" dominant-baseline="middle">What each tool documents answering</text>
+<text x="24.0" y="52.0" fill="#c3c2b7" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Read from each tool's README on PyPI, 2 Nov 2026. A reading of the docs, not a benchmark.</text>
+<text x="320.0" y="84.0" fill="#f0efec" font-size="12" font-weight="600" text-anchor="middle" dominant-baseline="middle">Questions about any code</text>
+<line x1="174.0" y1="95.0" x2="466.0" y2="95.0" stroke="#383835" stroke-width="1"/>
+<text x="606.0" y="84.0" fill="#f0efec" font-size="12" font-weight="600" text-anchor="middle" dominant-baseline="middle">Framework facts</text>
+<line x1="490.0" y1="95.0" x2="722.0" y2="95.0" stroke="#383835" stroke-width="1"/>
+<text x="200.0" y="108.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">Definition</text>
+<text x="260.0" y="108.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">References</text>
+<text x="320.0" y="108.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">Call</text>
+<text x="320.0" y="122.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">chains</text>
+<text x="380.0" y="108.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">Impact,</text>
+<text x="380.0" y="122.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">tests</text>
+<text x="440.0" y="108.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">Plain</text>
+<text x="440.0" y="122.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">language</text>
+<text x="516.0" y="108.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">Routes</text>
+<text x="576.0" y="108.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">Front end</text>
+<text x="576.0" y="122.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">to routes</text>
+<text x="636.0" y="108.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">pytest</text>
+<text x="636.0" y="122.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">fixtures</text>
+<text x="696.0" y="108.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">Asks the</text>
+<text x="696.0" y="122.0" fill="#c3c2b7" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">framework</text>
+<rect x="16" y="128.0" width="718.0" height="28.0" rx="4" fill="#3987e5" fill-opacity="0.10"/>
+<text x="24.0" y="142.0" fill="#f0efec" font-size="13" font-weight="700" text-anchor="start" dominant-baseline="middle">codeterrain</text>
+<circle cx="200.0" cy="142.0" r="6.5" fill="#3987e5"/>
+<circle cx="260.0" cy="142.0" r="6.5" fill="#3987e5"/>
+<circle cx="320.0" cy="142.0" r="5.5" fill="#1a1a19" stroke="#3987e5" stroke-width="2"/><path d="M320.0 136.5 A5.5 5.5 0 0 0 320.0 147.5 Z" fill="#3987e5"/>
+<circle cx="380.0" cy="142.0" r="6.5" fill="#3987e5"/>
+<circle cx="440.0" cy="142.0" r="2" fill="#383835"/>
+<circle cx="516.0" cy="142.0" r="6.5" fill="#3987e5"/>
+<circle cx="576.0" cy="142.0" r="6.5" fill="#3987e5"/>
+<circle cx="636.0" cy="142.0" r="6.5" fill="#3987e5"/>
+<circle cx="696.0" cy="142.0" r="6.5" fill="#3987e5"/>
+<line x1="24" y1="156.0" x2="726.0" y2="156.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="24.0" y="170.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Graphify</text>
+<circle cx="200.0" cy="170.0" r="6.5" fill="#3987e5"/>
+<circle cx="260.0" cy="170.0" r="6.5" fill="#3987e5"/>
+<circle cx="320.0" cy="170.0" r="6.5" fill="#3987e5"/>
+<circle cx="380.0" cy="170.0" r="5.5" fill="#1a1a19" stroke="#3987e5" stroke-width="2"/><path d="M380.0 164.5 A5.5 5.5 0 0 0 380.0 175.5 Z" fill="#3987e5"/>
+<circle cx="440.0" cy="170.0" r="6.5" fill="#3987e5"/>
+<circle cx="516.0" cy="170.0" r="2" fill="#383835"/>
+<circle cx="576.0" cy="170.0" r="2" fill="#383835"/>
+<circle cx="636.0" cy="170.0" r="2" fill="#383835"/>
+<circle cx="696.0" cy="170.0" r="2" fill="#383835"/>
+<line x1="24" y1="184.0" x2="726.0" y2="184.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="24.0" y="198.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">cgraphy</text>
+<circle cx="200.0" cy="198.0" r="6.5" fill="#3987e5"/>
+<circle cx="260.0" cy="198.0" r="6.5" fill="#3987e5"/>
+<circle cx="320.0" cy="198.0" r="6.5" fill="#3987e5"/>
+<circle cx="380.0" cy="198.0" r="6.5" fill="#3987e5"/>
+<circle cx="440.0" cy="198.0" r="6.5" fill="#3987e5"/>
+<circle cx="516.0" cy="198.0" r="2" fill="#383835"/>
+<circle cx="576.0" cy="198.0" r="2" fill="#383835"/>
+<circle cx="636.0" cy="198.0" r="2" fill="#383835"/>
+<circle cx="696.0" cy="198.0" r="2" fill="#383835"/>
+<line x1="24" y1="212.0" x2="726.0" y2="212.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="24.0" y="226.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">CodeGraphContext</text>
+<circle cx="200.0" cy="226.0" r="6.5" fill="#3987e5"/>
+<circle cx="260.0" cy="226.0" r="6.5" fill="#3987e5"/>
+<circle cx="320.0" cy="226.0" r="6.5" fill="#3987e5"/>
+<circle cx="380.0" cy="226.0" r="6.5" fill="#3987e5"/>
+<circle cx="440.0" cy="226.0" r="5.5" fill="#1a1a19" stroke="#3987e5" stroke-width="2"/><path d="M440.0 220.5 A5.5 5.5 0 0 0 440.0 231.5 Z" fill="#3987e5"/>
+<circle cx="516.0" cy="226.0" r="2" fill="#383835"/>
+<circle cx="576.0" cy="226.0" r="2" fill="#383835"/>
+<circle cx="636.0" cy="226.0" r="2" fill="#383835"/>
+<circle cx="696.0" cy="226.0" r="2" fill="#383835"/>
+<line x1="24" y1="240.0" x2="726.0" y2="240.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="24.0" y="254.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Code-Graph-RAG</text>
+<circle cx="200.0" cy="254.0" r="6.5" fill="#3987e5"/>
+<circle cx="260.0" cy="254.0" r="6.5" fill="#3987e5"/>
+<circle cx="320.0" cy="254.0" r="6.5" fill="#3987e5"/>
+<circle cx="380.0" cy="254.0" r="2" fill="#383835"/>
+<circle cx="440.0" cy="254.0" r="6.5" fill="#3987e5"/>
+<circle cx="516.0" cy="254.0" r="6.5" fill="#3987e5"/>
+<circle cx="576.0" cy="254.0" r="5.5" fill="#1a1a19" stroke="#3987e5" stroke-width="2"/><path d="M576.0 248.5 A5.5 5.5 0 0 0 576.0 259.5 Z" fill="#3987e5"/>
+<circle cx="636.0" cy="254.0" r="2" fill="#383835"/>
+<circle cx="696.0" cy="254.0" r="5.5" fill="#1a1a19" stroke="#3987e5" stroke-width="2"/><path d="M696.0 248.5 A5.5 5.5 0 0 0 696.0 259.5 Z" fill="#3987e5"/>
+<line x1="24" y1="268.0" x2="726.0" y2="268.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="24.0" y="282.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">code-search-graph</text>
+<circle cx="200.0" cy="282.0" r="6.5" fill="#3987e5"/>
+<circle cx="260.0" cy="282.0" r="6.5" fill="#3987e5"/>
+<circle cx="320.0" cy="282.0" r="6.5" fill="#3987e5"/>
+<circle cx="380.0" cy="282.0" r="6.5" fill="#3987e5"/>
+<circle cx="440.0" cy="282.0" r="6.5" fill="#3987e5"/>
+<circle cx="516.0" cy="282.0" r="6.5" fill="#3987e5"/>
+<circle cx="576.0" cy="282.0" r="2" fill="#383835"/>
+<circle cx="636.0" cy="282.0" r="2" fill="#383835"/>
+<circle cx="696.0" cy="282.0" r="2" fill="#383835"/>
+<line x1="24" y1="296.0" x2="726.0" y2="296.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="24.0" y="310.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">orgraph-mcp</text>
+<circle cx="200.0" cy="310.0" r="6.5" fill="#3987e5"/>
+<circle cx="260.0" cy="310.0" r="6.5" fill="#3987e5"/>
+<circle cx="320.0" cy="310.0" r="6.5" fill="#3987e5"/>
+<circle cx="380.0" cy="310.0" r="5.5" fill="#1a1a19" stroke="#3987e5" stroke-width="2"/><path d="M380.0 304.5 A5.5 5.5 0 0 0 380.0 315.5 Z" fill="#3987e5"/>
+<circle cx="440.0" cy="310.0" r="6.5" fill="#3987e5"/>
+<circle cx="516.0" cy="310.0" r="5.5" fill="#1a1a19" stroke="#3987e5" stroke-width="2"/><path d="M516.0 304.5 A5.5 5.5 0 0 0 516.0 315.5 Z" fill="#3987e5"/>
+<circle cx="576.0" cy="310.0" r="2" fill="#383835"/>
+<circle cx="636.0" cy="310.0" r="2" fill="#383835"/>
+<circle cx="696.0" cy="310.0" r="2" fill="#383835"/>
+<line x1="24" y1="324.0" x2="726.0" y2="324.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="24.0" y="338.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Serena</text>
+<circle cx="200.0" cy="338.0" r="6.5" fill="#3987e5"/>
+<circle cx="260.0" cy="338.0" r="6.5" fill="#3987e5"/>
+<circle cx="320.0" cy="338.0" r="2" fill="#383835"/>
+<circle cx="380.0" cy="338.0" r="2" fill="#383835"/>
+<circle cx="440.0" cy="338.0" r="2" fill="#383835"/>
+<circle cx="516.0" cy="338.0" r="2" fill="#383835"/>
+<circle cx="576.0" cy="338.0" r="2" fill="#383835"/>
+<circle cx="636.0" cy="338.0" r="2" fill="#383835"/>
+<circle cx="696.0" cy="338.0" r="2" fill="#383835"/>
+<line x1="24" y1="352.0" x2="726.0" y2="352.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="24.0" y="366.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">terrain</text>
+<circle cx="200.0" cy="366.0" r="6.5" fill="#3987e5"/>
+<circle cx="260.0" cy="366.0" r="6.5" fill="#3987e5"/>
+<circle cx="320.0" cy="366.0" r="6.5" fill="#3987e5"/>
+<circle cx="380.0" cy="366.0" r="2" fill="#383835"/>
+<circle cx="440.0" cy="366.0" r="6.5" fill="#3987e5"/>
+<circle cx="516.0" cy="366.0" r="2" fill="#383835"/>
+<circle cx="576.0" cy="366.0" r="2" fill="#383835"/>
+<circle cx="636.0" cy="366.0" r="2" fill="#383835"/>
+<circle cx="696.0" cy="366.0" r="2" fill="#383835"/>
+<line x1="24" y1="380.0" x2="726.0" y2="380.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="24.0" y="394.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Aider repo map</text>
+<circle cx="200.0" cy="394.0" r="5.5" fill="#1a1a19" stroke="#3987e5" stroke-width="2"/><path d="M200.0 388.5 A5.5 5.5 0 0 0 200.0 399.5 Z" fill="#3987e5"/>
+<circle cx="260.0" cy="394.0" r="2" fill="#383835"/>
+<circle cx="320.0" cy="394.0" r="2" fill="#383835"/>
+<circle cx="380.0" cy="394.0" r="2" fill="#383835"/>
+<circle cx="440.0" cy="394.0" r="5.5" fill="#1a1a19" stroke="#3987e5" stroke-width="2"/><path d="M440.0 388.5 A5.5 5.5 0 0 0 440.0 399.5 Z" fill="#3987e5"/>
+<circle cx="516.0" cy="394.0" r="2" fill="#383835"/>
+<circle cx="576.0" cy="394.0" r="2" fill="#383835"/>
+<circle cx="636.0" cy="394.0" r="2" fill="#383835"/>
+<circle cx="696.0" cy="394.0" r="2" fill="#383835"/>
+<line x1="24" y1="408.0" x2="726.0" y2="408.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="24.0" y="422.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">sourcecrumb</text>
+<circle cx="200.0" cy="422.0" r="5.5" fill="#1a1a19" stroke="#3987e5" stroke-width="2"/><path d="M200.0 416.5 A5.5 5.5 0 0 0 200.0 427.5 Z" fill="#3987e5"/>
+<circle cx="260.0" cy="422.0" r="2" fill="#383835"/>
+<circle cx="320.0" cy="422.0" r="2" fill="#383835"/>
+<circle cx="380.0" cy="422.0" r="2" fill="#383835"/>
+<circle cx="440.0" cy="422.0" r="2" fill="#383835"/>
+<circle cx="516.0" cy="422.0" r="2" fill="#383835"/>
+<circle cx="576.0" cy="422.0" r="2" fill="#383835"/>
+<circle cx="636.0" cy="422.0" r="2" fill="#383835"/>
+<circle cx="696.0" cy="422.0" r="2" fill="#383835"/>
+<line x1="24" y1="436.0" x2="726.0" y2="436.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="24.0" y="450.0" fill="#f0efec" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">pytest-fixture-tools</text>
+<circle cx="200.0" cy="450.0" r="2" fill="#383835"/>
+<circle cx="260.0" cy="450.0" r="2" fill="#383835"/>
+<circle cx="320.0" cy="450.0" r="2" fill="#383835"/>
+<circle cx="380.0" cy="450.0" r="2" fill="#383835"/>
+<circle cx="440.0" cy="450.0" r="2" fill="#383835"/>
+<circle cx="516.0" cy="450.0" r="2" fill="#383835"/>
+<circle cx="576.0" cy="450.0" r="2" fill="#383835"/>
+<circle cx="636.0" cy="450.0" r="5.5" fill="#1a1a19" stroke="#3987e5" stroke-width="2"/><path d="M636.0 444.5 A5.5 5.5 0 0 0 636.0 455.5 Z" fill="#3987e5"/>
+<circle cx="696.0" cy="450.0" r="6.5" fill="#3987e5"/>
+<line x1="478.0" y1="76.0" x2="478.0" y2="464.0" stroke="#383835" stroke-width="1" stroke-dasharray="3 3"/>
+<circle cx="30.0" cy="488.0" r="6.5" fill="#3987e5"/>
+<text x="42.0" y="488.0" fill="#c3c2b7" font-size="12" font-weight="400" text-anchor="start" dominant-baseline="middle">documented</text>
+<circle cx="142.0" cy="488.0" r="5.5" fill="#1a1a19" stroke="#3987e5" stroke-width="2"/><path d="M142.0 482.5 A5.5 5.5 0 0 0 142.0 493.5 Z" fill="#3987e5"/>
+<text x="154.0" y="488.0" fill="#c3c2b7" font-size="12" font-weight="400" text-anchor="start" dominant-baseline="middle">partly</text>
+<circle cx="227.6" cy="488.0" r="2" fill="#383835"/>
+<text x="239.6" y="488.0" fill="#c3c2b7" font-size="12" font-weight="400" text-anchor="start" dominant-baseline="middle">not documented</text>
+</svg>
