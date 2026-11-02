@@ -67,7 +67,8 @@ across repositories. 0.3 adds a code index of every Python file, application cod
 (`terrain def`, `refs`, `importers`, `imports`, `impact`), and language packs: Terraform's `.tf` files in
 `def` and `refs`, and a tree-sitter reader for the front-end calls.
 
-None of these repositories wires `terrain` into its agent instructions yet. Until one does, the gains
+None of these repositories names `terrain` in its checked-in agent instructions yet: the agents in
+the field used it through a reminder in the developers' own setup. Until one does, the gains
 below are what the tool delivers when asked, not what an agent session saves (section 8).
 
 ## 4. The benchli backend: from pain to proof
@@ -253,17 +254,18 @@ By category, without product claims:
 - **LLM-built knowledge graphs** trade exactness for coverage and cost a model run to build and refresh.
 - **Hand-written maps** go stale (section 1).
 
-We have not run a fuller prior-art sweep. One is owed before any public release, and this section makes no
-claim about tools we did not test.
+We have not run a fuller prior-art sweep yet, and this section makes no claim about tools we did not
+test.
 
 ## 8. What is not proven yet, and what comes next
 
 - **The agent-session A/B on a real backend lane.** The token figures are characters. Until the same lane
   runs with and without the tool, we do not claim a token saving for a whole session.
-- **Wiring it in.** No benchli or Mitbolas repository tells its agents to use `terrain` yet. The A/B and
-  the wiring go together.
+- **Wiring it in.** No benchli or Mitbolas repository names `terrain` in its checked-in agent
+  instructions yet; the README has a starting point for them. The A/B and the wiring go together.
 - **Next:** the matched route shown from the front-end side; calls whose path a data provider builds
   from a resource name; backends that are not FastAPI; a background process that keeps the indexes
   loaded, if Python's start-up (about a quarter of a second) is worth removing.
 - **An MCP wrapper** only after the A/B shows a token gain.
-- **A public release** only after the tool proves its value in use. The repository is private for now.
+- **A benchmark others can repeat**: the same measurements on a public repository, with the
+  commands, revisions and raw outputs published.

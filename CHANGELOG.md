@@ -4,6 +4,16 @@
 
 - The README's diagram of how it works is an image, as the charts are: PyPI does not render
   Mermaid, so the 0.3.0 page showed its source.
+- `codeterrain` is installed as a second name for the `terrain` command, for a machine where
+  another tool already installs a `terrain`.
+- The README leads with `uv tool install codeterrain` from PyPI, and has a starting point for an
+  agent's instructions. Its claims are narrowed to what is measured: no "exact answers" headline;
+  `impact` lists the tests that statically reach a name, not the tests that would catch a change;
+  character counts measure an answer, not a session; the import tier's safeguards stop accidents,
+  not hostile code, so it is for code you trust. The field figures cover all 160 logged lookups,
+  with their period and how they were judged, two marked wrong among them.
+- SECURITY.md and the rationale no longer describe the repository as private or a public release
+  as future work.
 
 ## 0.3.0 (2026-11-02)
 

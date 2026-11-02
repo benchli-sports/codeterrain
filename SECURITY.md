@@ -82,6 +82,5 @@ passes the check.
 
 ## Reporting a vulnerability
 
-The repository is private for now. Open a private security advisory on the repository
-(Security, then Advisories, then "Report a vulnerability"), with a reproduction if you have one. Do not
-open a public issue.
+Report it privately on GitHub: on the repository's Security tab, choose "Report a vulnerability", and
+include a reproduction if you have one. Do not open a public issue.

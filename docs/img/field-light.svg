@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="760" height="280" viewBox="0 0 760 280" font-family='system-ui, -apple-system, "Segoe UI", sans-serif' role="img">
 <title>Coding agents using terrain on real work</title>
-<desc>Answered: 79%; Partly answered: 12%; No help: 2%; Error (mostly the wrong command): 7%; Wrong answer: 0%</desc>
+<desc>Answered: 74%; Partly answered: 10%; No help: 8%; Error (mostly the wrong command): 8%; Wrong answer: 1%</desc>
 <rect width="760" height="280" rx="8" fill="#fcfcfb"/>
 <text x="24.0" y="30.0" fill="#0b0b0b" font-size="16" font-weight="600" text-anchor="start" dominant-baseline="middle">Coding agents using terrain on real work</text>
-<text x="24.0" y="52.0" fill="#52514e" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Share of lookups the agents logged, by outcome, over their first days with it.</text>
+<text x="24.0" y="52.0" fill="#52514e" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">160 lookups the agents logged, 26 Oct to 2 Nov 2026, by outcome, as they judged it.</text>
 <line x1="250.0" y1="74.0" x2="250.0" y2="240.0" stroke="#c3c2b7" stroke-width="1"/>
 <text x="250.0" y="254.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">0%</text>
 <line x1="347.5" y1="74.0" x2="347.5" y2="240.0" stroke="#e1e0d9" stroke-width="1"/>
@@ -15,17 +15,18 @@
 <line x1="640.0" y1="74.0" x2="640.0" y2="240.0" stroke="#e1e0d9" stroke-width="1"/>
 <text x="640.0" y="254.0" fill="#898781" font-size="11" font-weight="400" text-anchor="middle" dominant-baseline="middle">100%</text>
 <text x="24.0" y="87.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Answered</text>
-<path d="M250.0 80.0 H554.1 Q558.1 80.0 558.1 84.0 V90.0 Q558.1 94.0 554.1 94.0 H250.0 Z" fill="#2a78d6"/>
-<text x="564.1" y="87.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">79%</text>
+<path d="M250.0 80.0 H534.6 Q538.6 80.0 538.6 84.0 V90.0 Q538.6 94.0 534.6 94.0 H250.0 Z" fill="#2a78d6"/>
+<text x="544.6" y="87.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">74%</text>
 <text x="24.0" y="121.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Partly answered</text>
-<path d="M250.0 114.0 H292.8 Q296.8 114.0 296.8 118.0 V124.0 Q296.8 128.0 292.8 128.0 H250.0 Z" fill="#2a78d6"/>
-<text x="302.8" y="121.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">12%</text>
+<path d="M250.0 114.0 H285.0 Q289.0 114.0 289.0 118.0 V124.0 Q289.0 128.0 285.0 128.0 H250.0 Z" fill="#2a78d6"/>
+<text x="295.0" y="121.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">10%</text>
 <text x="24.0" y="155.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">No help</text>
-<path d="M250.0 148.0 H253.9 Q257.8 148.0 257.8 151.9 V158.1 Q257.8 162.0 253.9 162.0 H250.0 Z" fill="#2a78d6"/>
-<text x="263.8" y="155.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">2%</text>
+<path d="M250.0 148.0 H277.2 Q281.2 148.0 281.2 152.0 V158.0 Q281.2 162.0 277.2 162.0 H250.0 Z" fill="#2a78d6"/>
+<text x="287.2" y="155.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">8%</text>
 <text x="24.0" y="189.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Error (mostly the wrong command)</text>
-<path d="M250.0 182.0 H273.3 Q277.3 182.0 277.3 186.0 V192.0 Q277.3 196.0 273.3 196.0 H250.0 Z" fill="#2a78d6"/>
-<text x="283.3" y="189.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">7%</text>
+<path d="M250.0 182.0 H277.2 Q281.2 182.0 281.2 186.0 V192.0 Q281.2 196.0 277.2 196.0 H250.0 Z" fill="#2a78d6"/>
+<text x="287.2" y="189.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">8%</text>
 <text x="24.0" y="223.0" fill="#0b0b0b" font-size="13" font-weight="400" text-anchor="start" dominant-baseline="middle">Wrong answer</text>
-<text x="256.0" y="223.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">0%</text>
+<path d="M250.0 216.0 H252.0 Q253.9 216.0 253.9 217.9 V228.1 Q253.9 230.0 252.0 230.0 H250.0 Z" fill="#2a78d6"/>
+<text x="259.9" y="223.0" fill="#0b0b0b" font-size="11" font-weight="600" text-anchor="start" dominant-baseline="middle">1%</text>
 </svg>

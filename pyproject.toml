@@ -39,6 +39,7 @@ Issues = "https://github.com/benchli-sports/codeterrain/issues"
 
 [project.scripts]
 terrain = "codeterrain.cli:main"
+codeterrain = "codeterrain.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/codeterrain"]

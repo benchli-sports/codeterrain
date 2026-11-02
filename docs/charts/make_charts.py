@@ -159,11 +159,11 @@ def accuracy_chart(t: dict[str, str]) -> str:
 
 FIELD = [
     # (row label, share of logged lookups in %)
-    ("Answered", 79),
-    ("Partly answered", 12),
-    ("No help", 2),
-    ("Error (mostly the wrong command)", 7),
-    ("Wrong answer", 0),
+    ("Answered", 74),
+    ("Partly answered", 10),
+    ("No help", 8),
+    ("Error (mostly the wrong command)", 8),
+    ("Wrong answer", 1),
 ]
 
 
@@ -182,7 +182,7 @@ def field_chart(t: dict[str, str]) -> str:
     desc = "; ".join(f"{label}: {share}%" for label, share in FIELD)
     return frame(
         "Coding agents using terrain on real work",
-        "Share of lookups the agents logged, by outcome, over their first days with it.",
+        "160 lookups the agents logged, 26 Oct to 2 Nov 2026, by outcome, as they judged it.",
         bottom + 40, body, t, desc,
     )
 

@@ -5,7 +5,7 @@
 <h1 align="center">codeterrain</h1>
 
 <p align="center">
-  <b><code>terrain</code>: exact answers about your code, in under a second.</b><br>
+  <b><code>terrain</code>: answers about your code, in under a second.</b><br>
   For coding agents, and the people working beside them.
 </p>
 
@@ -25,28 +25,33 @@
 ---
 
 A coding agent spends most of its reading on structure it has to rediscover every session: which
-fixtures a test really gets, where a route is handled, who calls a function, which tests would catch a
-change to it. The answers are in the code, but finding them takes rounds of grep and file reads, and a
+fixtures a test really gets, where a route is handled, who calls a function, which tests reach
+it. The answers are in the code, but finding them takes rounds of grep and file reads, and a
 wrong guess costs a review round.
 
 `terrain` answers those questions from a cache, the way the framework itself would answer them.
 
 | | |
 |:---|:---|
-| **Exact** | Setup order equals `pytest --setup-plan` on every node tested. `refs` follows imports and re-exports, so an alias counts and a same-named function elsewhere does not. |
+| **Accurate where it counts** | Setup order and routes come from pytest and FastAPI themselves: setup order equals `pytest --setup-plan` on every node tested. `refs`, `def` and `impact` read the code statically: they follow imports and re-exports, so an alias counts and a same-named function elsewhere does not, and a name whose meaning depends on run time is left unresolved rather than guessed ([limits](docs/limits.md)). |
 | **Fast** | Most warm answers take 0.3 to 0.5 s on a large backend, Python start-up included. |
-| **Cheaper to read** | 4.4x to 8.8x fewer characters than the grep-and-read it replaces, on code bases with a real fixture graph. |
-| **Safe to point at a repo** | The static tier never runs the target's code. The tier that has to import it runs in a sandbox with no credentials, and by default it cannot write into the repository. |
+| **Shorter to read** | 4.4x to 8.8x fewer characters than the grep-and-read it replaces, on code bases with a real fixture graph. That measures the answer, not a whole session's tokens, cost or time. |
+| **Careful with your repo** | The static tier never runs the target's code. Setup order and routes have to import it: they run in a subprocess with an allowlisted environment, dummy cloud credentials and a best-effort network guard, which stop accidents, not hostile code. Run those two on code you trust ([SECURITY.md](SECURITY.md)). |
 
 ## Quick start
 
 ```sh
-uv tool install <path-to-this-checkout>     # Python 3.12+; the only dependency is pluggy
-# or "<path-to-this-checkout>[terraform]" to add the Terraform language pack, "[typescript]"
-# to read front-end calls with tree-sitter, "[terraform,typescript]" for both
+uv tool install codeterrain                 # Python 3.12+; the only dependency is pluggy
+# or "codeterrain[terraform]" to add the Terraform language pack, "codeterrain[typescript]"
+# to read front-end calls with tree-sitter, "codeterrain[terraform,typescript]" for both
 cd your-repo
 terrain doctor                              # what it found, and which config it used
+terrain fixtures                            # every pytest fixture, and which definition wins where
 ```
+
+The command is `terrain`; `codeterrain` is the same command, for a machine where another tool
+already installs a `terrain`. To work on codeterrain itself, install from a checkout instead:
+`uv tool install --editable <path-to-checkout>`.
 
 Ask about a function: where it is called, how each call passes its arguments, and which tests patch it.
 This is `terrain` run on its own source:
@@ -64,8 +69,9 @@ src/codeterrain/impact.py:272             _Fixtures.__init__             1 posit
 src/codeterrain/impact.py:424             _inherited_tests               1 positional
 ```
 
-Ask which tests would catch a change to it, through its callers and the fixtures that call them
-(abridged):
+Ask which tests statically reach it, through its callers and the fixtures that call them
+(abridged). A test that reaches a function does not necessarily check what you change, and an
+empty list does not prove the change is untested:
 
 ```console
 $ terrain impact is_test_module --depth 2
@@ -99,6 +105,29 @@ The commands that import your application (`setup-order`, `routes`) run in the *
 interpreter: pass `--python .venv/bin/python` or set `CODETERRAIN_PYTHON`. Add `--json` to any command
 for the full data.
 
+## Telling your agent
+
+An agent uses `terrain` when its instructions say when to. A starting point for `AGENTS.md` or
+`CLAUDE.md`:
+
+```markdown
+## Code structure: ask terrain first
+
+Before grepping or reading files for one of these, run `terrain` in the repository root
+(local, under a second when warm; add `--json` for the full data):
+
+- where a name is defined: `terrain def NAME`
+- who calls, passes or patches it: `terrain refs NAME`
+- which tests statically reach it: `terrain impact NAME` (a starting point, not proof of coverage)
+- which fixtures a test gets, in order: `terrain setup-order NODEID`
+- a fixture and what depends on it: `terrain fixture NAME`
+- where a route is handled: `terrain route METHOD PATH`
+- a front end's HTTP calls, and the backend routes they hit: `terrain calls`, `terrain callers`
+
+When terrain says it cannot resolve something, fall back to grep. `setup-order` and the route
+commands import the code: use them only on code you trust.
+```
+
 ## What it answers
 
 | Question | Command | What grep can't tell you |
@@ -106,7 +135,7 @@ for the full data.
 | Where is this defined? | `terrain def NAME` | Resolves a re-export to the real definition |
 | Who calls it, passes it, patches it? | `terrain refs NAME` | Follows imports and aliases, flags calls that don't fit the signature, and separates tests that patch it out |
 | Who imports this module, and what does it import? | `terrain importers MODULE`, `terrain imports MODULE` | Every import of it or of a name from it, relative imports resolved |
-| Which tests would catch a change? | `terrain impact NAME` | Walks callers and fixtures the way pytest resolves them |
+| Which tests statically reach it? | `terrain impact NAME` | Walks callers and fixtures the way pytest resolves them; what it cannot follow statically is listed, not dropped |
 | Which fixtures does a test get, in what order? | `terrain setup-order NODEID` | pytest's own resolution, overrides and scopes included |
 | What fixtures exist, and who uses one? | `terrain fixtures`, `terrain fixture NAME` | Which definition wins where, and every dependent |
 | Where is a route handled, with what access? | `terrain routes`, `terrain route METHOD PATH` | Prefixes from router calls in other files, joined to your access manifest |
@@ -127,7 +156,7 @@ smaller Python code bases, an analytics project with a large fixture graph, and 
 <td align="center" width="25%"><h2>11 / 11</h2>test nodes where setup order equals <code>pytest --setup-plan</code></td>
 <td align="center" width="25%"><h2>0.35 s</h2>median warm <code>fixtures</code> answer on the large backend</td>
 <td align="center" width="25%"><h2>up to 8.8x</h2>fewer characters for an agent to read</td>
-<td align="center" width="25%"><h2>0</h2>answers marked wrong in agents' logged lookups</td>
+<td align="center" width="25%"><h2>1%</h2>of 160 lookups agents logged were marked wrong, by the agents themselves</td>
 </tr>
 </table>
 
@@ -158,17 +187,25 @@ than the grep; there the gain is the exact order, which grep can't show.
 ### In the field
 
 Coding agents working on real tasks logged each `terrain` lookup: what they asked, whether the answer
-was right, and what they would have done instead.
+was right, and what they would have done instead. 160 lookups, 26 October to 2 November 2026, across
+the code bases above. Each agent judged its own answer against what it then read or ran; nobody
+checked the judgements independently.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/benchli-sports/codeterrain/main/docs/img/field-dark.svg">
-  <img src="https://raw.githubusercontent.com/benchli-sports/codeterrain/main/docs/img/field-light.svg" alt="Outcomes of logged lookups: answered 79%, partly answered 12%, no help 2%, error 7% (mostly the wrong command), wrong answer 0%" width="760">
+  <img src="https://raw.githubusercontent.com/benchli-sports/codeterrain/main/docs/img/field-light.svg" alt="Outcomes of 160 lookups agents logged from 26 October to 2 November 2026, as they judged them: answered 74%, partly answered 10%, no help 8%, error 8% (mostly the wrong command), wrong answer 1%" width="760">
 </picture>
 
-- Each fully answered lookup saved the agent **about 1.3 tool calls**, by its own count.
-- **No answer was marked wrong.** The partial answers came from output cut by the token budget, a cache
-  built from a different checkout than the one being edited, and a value read through a module alias.
-- Most errors were the wrong command: `callers`, which is for routes, where `refs` was meant.
+- Each fully answered lookup saved the agent **about 1.8 tool calls**, by its own count.
+- **Two answers were marked wrong.** In one, `fixture` answered a fixture of a live-test folder it
+  did not read with a unit-test fixture of the same name; `fixtures`, `fixture` and `doctor` now name
+  such a folder. The other, `routes` missing an app's support routes, was misjudged: a later lookup
+  found them in the view, below the token budget's cut, whose "more" notice a `grep` had removed.
+- The partial answers came mostly from output cut by the token budget; the rest from a cache built
+  from a different checkout than the one being edited, reads `refs` does not see (through a module
+  alias, as a dict key), duck-typed calls, and route filters that matched less than expected.
+- Most errors were the wrong command or arguments: `callers`, which is for routes, where `refs` was
+  meant.
 
 ## Inferred token savings
 
@@ -177,9 +214,9 @@ An estimate from the two measurements above, not an A/B experiment:
 | Step | Figure |
 |:---|---:|
 | Reading saved on a question `terrain` answers, large backend (4.4x to 6.9x fewer characters) | 77% to 86% |
-| Lookups answered fully, in the field | 79% |
-| Lookups answered partly (counted at half the saving) | 12% |
-| **Inferred share of lookup reading saved on a large Python backend** | **about 65% to 73%** |
+| Lookups answered fully, in the field | 74% |
+| Lookups answered partly (counted at half the saving) | 10% |
+| **Inferred share of lookup reading saved on a large Python backend** | **about 61% to 68%** |
 
 Lookups are only part of a session: reasoning, editing and test runs are untouched, and small code
 bases save little. Tokens here are characters divided by four. A session-level A/B, the same lane run
@@ -198,7 +235,8 @@ with and without `terrain`, is the next measurement. The method and the per-repo
   it is not. It never imports or runs the target, and re-reads only the files that changed.
 - **The import tier** needs the real framework: pytest's fixture resolution, FastAPI's route table. It
   runs in a subprocess using the target's own interpreter, with an allowlisted environment, dummy cloud
-  credentials, no proxy and a best-effort network guard.
+  credentials, no proxy and a best-effort network guard. Those stop accidents, not hostile code: it
+  imports and runs the target, so use it on code you trust.
 - **The cache** lives outside the checkout, in the git common directory or your user cache, and is
   keyed on content hashes.
 
