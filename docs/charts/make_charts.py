@@ -225,10 +225,78 @@ def speed_chart(t: dict[str, str]) -> str:
     )
 
 
+# --- 5. how it works ----------------------------------------------------------------------------
+# A drawing, not a chart: PyPI renders no Mermaid, so the README's diagram is an SVG like the rest.
+
+
+def box(x: float, y: float, w: float, h: float, lines: list[str], t: dict[str, str],
+        stroke: str, rx: float = 6, weight: int = 400) -> list[str]:
+    out = [f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" rx="{rx:.1f}" '
+           f'fill="{t["surface"]}" stroke="{stroke}" stroke-width="1.5"/>']
+    first = y + h / 2 - (len(lines) - 1) * 8
+    for i, line in enumerate(lines):
+        out.append(text(x + w / 2, first + i * 16, line, t["ink"] if i == 0 else t["ink2"],
+                        13 if i == 0 else 11, "middle", weight if i == 0 else 400))
+    return out
+
+
+def arrow(x1: float, y1: float, x2: float, y2: float, t: dict[str, str]) -> str:
+    return (f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="{t["ink2"]}" '
+            f'stroke-width="1.5" marker-end="url(#head)"/>')
+
+
+def group(x: float, y: float, w: float, title: str, items: list[list[str]],
+          t: dict[str, str], key: str) -> tuple[list[str], float]:
+    """A tier: a titled frame holding one box per item. Returns the parts and its height."""
+    h = 40 + len(items) * 50
+    out = [f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" rx="8" '
+           f'fill="none" stroke="{t[key]}" stroke-width="1.5" stroke-dasharray="5 4"/>',
+           text(x + 14, y + 20, title, t[key], 12, weight=600)]
+    for i, lines in enumerate(items):
+        out += box(x + 14, y + 36 + i * 50, w - 28, 40, lines, t, t["axis"])
+    return out, h
+
+
+def architecture_chart(t: dict[str, str]) -> str:
+    row, w, h = 84.0, 210.0, 46.0
+    body = [f'<defs><marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
+            f'markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" '
+            f'fill="{t["ink2"]}"/></marker></defs>']
+    body += box(24, row, w, h, ["terrain refs NAME", "an agent, or you"], t, t["ink2"], 23, 600)
+    body += box(275, row, w, h, ["cache per repository", "keyed on content"], t, t["s1"], 6, 600)
+    body += box(526, row, w, h, ["answer", "in under a second"], t, t["ink2"], 23, 600)
+    body.append(arrow(24 + w, row + h / 2, 275, row + h / 2, t))
+    body.append(arrow(275 + w, row + h / 2, 526, row + h / 2, t))
+    body.append(text(505, row + h / 2 - 10, "warm", t["ink2"], 11, "middle"))
+    top = row + h + 70
+    static, hs = group(24, top, 350, "Static tier: reads files, never runs them", [
+        ["fixtures and tests", "Python's ast"],
+        ["code index", "ast, SQLite"],
+        ["front-end HTTP calls", "tree-sitter, or the JS/TS tokenizer"],
+    ], t, "s1")
+    sandboxed, hi = group(386, top, 350, "Import tier: a sandboxed subprocess", [
+        ["setup order", "pytest --collect-only"],
+        ["routes", "imports the apps"],
+    ], t, "s2")
+    body += static + sandboxed
+    body.append(arrow(199, top, 340, row + h, t))
+    body.append(text(205, top - 30, "changed files only", t["ink2"], 11, "end"))
+    body.append(arrow(561, top, 420, row + h, t))
+    body.append(text(555, top - 30, "on refresh; served stamped stale", t["ink2"], 11))
+    desc = ("A terrain question is answered from a cache per repository, keyed on content: in "
+            "under a second when warm. The static tier fills it from changed files only, reading "
+            "fixtures, tests and the code index with Python's ast and front-end calls with "
+            "tree-sitter or a tokenizer; it never runs the code. The import tier, a sandboxed "
+            "subprocess, fills it on refresh with the setup order and the routes.")
+    return frame("How it works", "Two tiers fill one cache; every answer is read from it.",
+                 top + max(hs, hi) + 24, body, t, desc)
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, draw in (("tokens", tokens_chart), ("accuracy", accuracy_chart),
-                       ("speed", speed_chart), ("field", field_chart)):
+                       ("speed", speed_chart), ("field", field_chart),
+                       ("architecture", architecture_chart)):
         for mode, theme in THEMES.items():
             path = OUT / f"{name}-{mode}.svg"
             path.write_bytes(draw(theme).encode("utf-8"))

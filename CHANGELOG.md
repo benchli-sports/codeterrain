@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.3.0 (unreleased)
+## 0.3.1 (2026-11-02)
+
+- The README's diagram of how it works is an image, as the charts are: PyPI does not render
+  Mermaid, so the 0.3.0 page showed its source.
+
+## 0.3.0 (2026-11-02)
 
 - `terrain refs` following an alias counts a read after an assignment on the same line
   (`ALIAS = VALUE; print(ALIAS)`), and still not one inside the assignment's right-hand side.

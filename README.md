@@ -188,22 +188,10 @@ with and without `terrain`, is the next measurement. The method and the per-repo
 
 ## How it works
 
-```mermaid
-flowchart LR
-    ask(["agent or you: terrain refs NAME"]) --> cache[("cache per repository,<br/>keyed on content")]
-    cache -->|warm| answer(["answer in under a second"])
-    subgraph static ["Static tier: reads files, never runs them"]
-        fixtures["fixtures and tests<br/>(ast)"]
-        code["code index<br/>(ast, SQLite)"]
-        calls["front-end HTTP calls<br/>(tree-sitter, or the JS/TS tokenizer)"]
-    end
-    subgraph sandbox ["Import tier: sandboxed subprocess"]
-        order["setup order<br/>(pytest --collect-only)"]
-        routes["routes<br/>(imports the apps)"]
-    end
-    static -->|incremental, changed files only| cache
-    sandbox -->|on refresh; served stamped stale| cache
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/benchli-sports/codeterrain/main/docs/img/architecture-dark.svg">
+  <img src="https://raw.githubusercontent.com/benchli-sports/codeterrain/main/docs/img/architecture-light.svg" alt="How it works: a terrain question is answered from a cache per repository, keyed on content, in under a second when warm. The static tier (fixtures and tests and the code index with Python's ast, front-end calls with tree-sitter or a tokenizer) fills it from changed files only and never runs the code. The import tier, a sandboxed subprocess, fills it on refresh with the setup order and the routes." width="760">
+</picture>
 
 - **The static tier** reads source with Python's `ast`, and front-end files with tree-sitter when the
   TypeScript pack is installed (chosen for speed and accuracy) or a tokenizer written in Python when
