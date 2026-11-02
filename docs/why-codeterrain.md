@@ -207,7 +207,9 @@ a second, under the same machine load as the rest of this section.
 Importing an application can call cloud APIs, and running a repository's collection runs its code. The
 trust model is in [SECURITY.md](../SECURITY.md): codeterrain's own process never runs target code, and the
 child that does gets an allowlisted environment, dummy cloud credentials, an empty home, git without a
-credential helper, a loopback-only socket guard, and no way to write into the repository by default.
+credential helper, a loopback-only socket guard, and pytest's own file-writing options switched off,
+so its reports do not land in the repository. These stop accidents, not hostile code, which can
+still read and write by absolute path; the import tier is for code you trust.
 
 The evidence, on the backend and on hostile test repositories built for the purpose:
 

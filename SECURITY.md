@@ -28,10 +28,12 @@ What codeterrain does guarantee is about its own, parent process:
    `pytest_args` and `respect_addopts` are honoured only from `--config` or your user config, and
    ignored, with a warning, when the repository's `pyproject.toml` sets them. A user-config `pass_env`
    applies to every repository you run on, trusted or not; a `--config` file scopes it to one run.
-3. **It never lets the child write into the repository by default.** `addopts` are switched off,
+3. **It does not have pytest write into the repository by default.** `addopts` are switched off,
    `log_file` is blanked, and the known file-writing options of pytest and common plugins are refused,
    from the project's options and from `pytest_args`. The child runs in a private temp directory,
-   outside the cache, which is removed afterwards.
+   outside the cache, which is removed afterwards. This stops reports and logs landing in the
+   checkout; it does not stop target code that opens a file by absolute path, which can write
+   anywhere you can.
 4. **It ends the child and what it started.** A timeout kills the whole process tree. On Windows a job
    object also kills what the child left behind after a normal exit; on POSIX its process group is.
 
@@ -76,7 +78,7 @@ passes the check.
 
 | | |
 |---|---|
-| **Guaranteed** (each has a regression test) | the parent never runs target code or a repository-shipped executable; the environment allowlist; repository config cannot widen it; git in the child has no credential helper; no default writes into the target; tree kill on timeout and of stragglers after exit (except a POSIX grandchild that started its own session); redaction of the values codeterrain knows; terminal escaping; path confinement |
+| **Guaranteed** (each has a regression test) | the parent never runs target code or a repository-shipped executable; the environment allowlist; repository config cannot widen it; git in the child has no credential helper; no default writes into the target by pytest or its known plugins; tree kill on timeout and of stragglers after exit (except a POSIX grandchild that started its own session); redaction of the values codeterrain knows; terminal escaping; path confinement |
 | **Best-effort** | the network guard. It blocks accidental network calls from Python code in the child, and is not a boundary against hostile code: non-Python subprocesses, isolated-mode Python children, a freshly loaded `_socket`, target code that undoes the patch, `getfqdn`, the C socket class and C extensions are not covered. [docs/sandbox.md](docs/sandbox.md) lists every gap. |
 | **Not covered** | secrets codeterrain does not know (a value the target reads from a file and echoes); loopback services, which are reachable by design; a POSIX grandchild that started its own session; hostile code reading the real home by absolute path or an OS credential store; a child that rewrites the cache it worked out from the root; a crash of a native parser a language pack uses (the TypeScript pack's tree-sitter parses front-end source in codeterrain's process: it runs nothing from that source, and a file over 2,000,000 bytes is not read, but a parser fault would end the command rather than report the file) |
 

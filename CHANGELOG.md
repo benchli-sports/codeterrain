@@ -15,7 +15,9 @@
   not hostile code, so it is for code you trust. The field figures cover all 160 logged lookups,
   with their period and how they were judged, two marked wrong among them.
 - SECURITY.md and the rationale no longer describe the repository as private or a public release
-  as future work.
+  as future work. SECURITY.md's third guarantee says what it covers: pytest and its known plugins
+  do not write into the repository by default; target code that opens a file by absolute path still
+  can.
 
 ## 0.3.0 (2026-11-02)
 

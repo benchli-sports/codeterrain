@@ -159,12 +159,12 @@ def accuracy_chart(t: dict[str, str]) -> str:
 # --- 4. field use ---------------------------------------------------------------------------------
 
 FIELD = [
-    # (row label, share of logged lookups in %)
-    ("Answered", 74),
-    ("Partly answered", 10),
-    ("No help", 8),
-    ("Error (mostly the wrong command)", 8),
-    ("Wrong answer", 1),
+    # (row label, lookups): one outcome each, as the agent judged it; shares are of the total
+    ("Answered", 118),
+    ("Partly answered", 16),
+    ("No help", 12),
+    ("Error (mostly the wrong command)", 12),
+    ("Wrong answer", 2),
 ]
 
 
@@ -173,17 +173,20 @@ def field_chart(t: dict[str, str]) -> str:
     scale = (WIDTH - LABEL_W - RIGHT_PAD) / 100
     bottom = top + row * len(FIELD) - 10
     body = axis(x0, scale, [0, 25, 50, 75, 100], top - 6, bottom, t, lambda v: f"{v:.0f}%")
-    for i, (label, share) in enumerate(FIELD):
+    total = sum(n for _, n in FIELD)
+    for i, (label, n) in enumerate(FIELD):
         y = top + i * row
+        share = 100 * n / total
         body.append(text(24, y + BAR / 2, label, t["ink"], 13))
-        if share:
+        if n:
             body.append(bar(x0, y, share * scale, t["s1"]))
-        body.append(text(x0 + share * scale + 6, y + BAR / 2, f"{share}%", t["ink"], 11,
-                         weight=600))
-    desc = "; ".join(f"{label}: {share}%" for label, share in FIELD)
+        body.append(text(x0 + share * scale + 6, y + BAR / 2, f"{n} ({share:.0f}%)", t["ink"],
+                         11, weight=600))
+    desc = "; ".join(f"{label}: {n} of {total} ({100 * n / total:.0f}%)" for label, n in FIELD)
     return frame(
         "Coding agents using codeterrain on real work",
-        "160 lookups the agents logged, 26 Oct to 2 Nov 2026, by outcome, as they judged it.",
+        f"{total} lookups the agents logged, 26 Oct to 2 Nov 2026, one outcome each, as they "
+        "judged it.",
         bottom + 40, body, t, desc,
     )
 

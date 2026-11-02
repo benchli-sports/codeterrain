@@ -157,7 +157,7 @@ smaller Python code bases, an analytics project with a large fixture graph, and 
 <td align="center" width="25%"><h2>11 / 11</h2>test nodes where setup order equals <code>pytest --setup-plan</code></td>
 <td align="center" width="25%"><h2>0.35 s</h2>median warm <code>fixtures</code> answer on the large backend</td>
 <td align="center" width="25%"><h2>up to 8.8x</h2>fewer characters for an agent to read</td>
-<td align="center" width="25%"><h2>1%</h2>of 160 lookups agents logged were marked wrong, by the agents themselves</td>
+<td align="center" width="25%"><h2>160</h2>field lookups logged by coding agents; agent-assessed, not independently validated</td>
 </tr>
 </table>
 
@@ -190,11 +190,12 @@ than the grep; there the gain is the exact order, which grep can't show.
 Coding agents working on real tasks logged each `codeterrain` lookup: what they asked, whether the answer
 was right, and what they would have done instead. 160 lookups, 26 October to 2 November 2026, across
 the code bases above. Each agent judged its own answer against what it then read or ran; nobody
-checked the judgements independently.
+checked the judgements independently. Every lookup has one outcome; the shares are rounded, so they
+can add up to 101%.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/benchli-sports/codeterrain/main/docs/img/field-dark.svg">
-  <img src="https://raw.githubusercontent.com/benchli-sports/codeterrain/main/docs/img/field-light.svg" alt="Outcomes of 160 lookups agents logged from 26 October to 2 November 2026, as they judged them: answered 74%, partly answered 10%, no help 8%, error 8% (mostly the wrong command), wrong answer 1%" width="760">
+  <img src="https://raw.githubusercontent.com/benchli-sports/codeterrain/main/docs/img/field-light.svg" alt="Outcomes of 160 lookups agents logged from 26 October to 2 November 2026, one outcome each, as they judged them: answered 118 (74%), partly answered 16 (10%), no help 12 (8%), error 12 (8%, mostly the wrong command), wrong answer 2 (1%)" width="760">
 </picture>
 
 - Each fully answered lookup saved the agent **about 1.8 tool calls**, by its own count.
