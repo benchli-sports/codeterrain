@@ -296,11 +296,91 @@ def architecture_chart(t: dict[str, str]) -> str:
                  top + max(hs, hi) + 24, body, t, desc)
 
 
+# --- 6. what comparable tools document answering --------------------------------------------------
+
+# Columns: definition, references, call chains, impact or affected tests, plain-language questions
+# | routes, front-end calls matched to routes, pytest fixtures, answers from the framework itself.
+# Y documented, P partly, N not documented; read from each tool's PyPI README (docs/prior-art.md).
+PRIOR_COLUMNS = [
+    ["Definition"], ["References"], ["Call", "chains"], ["Impact,", "tests"], ["Plain", "language"],
+    ["Routes"], ["Front end", "to routes"], ["pytest", "fixtures"], ["Asks the", "framework"],
+]
+PRIOR_GENERAL = 5  # the first five columns are questions about any code
+PRIOR = [
+    ("codeterrain", "YYPYN" "YYYY"),
+    ("Graphify", "YYYPY" "NNNN"),
+    ("cgraphy", "YYYYY" "NNNN"),
+    ("CodeGraphContext", "YYYYP" "NNNN"),
+    ("Code-Graph-RAG", "YYYNY" "YPNP"),
+    ("code-search-graph", "YYYYY" "YNNN"),
+    ("orgraph-mcp", "YYYPY" "PNNN"),
+    ("Serena", "YYNNN" "NNNN"),
+    ("terrain", "YYYNY" "NNNN"),
+    ("Aider repo map", "PNNNP" "NNNN"),
+    ("sourcecrumb", "PNNNN" "NNNN"),
+    ("pytest-fixture-tools", "NNNNN" "NNPY"),
+]
+
+
+def mark(x: float, y: float, v: str, t: dict[str, str]) -> str:
+    if v == "Y":
+        return f'<circle cx="{x:.1f}" cy="{y:.1f}" r="6.5" fill="{t["s1"]}"/>'
+    if v == "P":
+        return (f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5.5" fill="{t["surface"]}" '
+                f'stroke="{t["s1"]}" stroke-width="2"/>'
+                f'<path d="M{x:.1f} {y - 5.5:.1f} A5.5 5.5 0 0 0 {x:.1f} {y + 5.5:.1f} Z" '
+                f'fill="{t["s1"]}"/>')
+    return f'<circle cx="{x:.1f}" cy="{y:.1f}" r="2" fill="{t["axis"]}"/>'
+
+
+def prior_art_chart(t: dict[str, str]) -> str:
+    label_w, col_w, split, row_h = 170, 60, 16, 28
+    xs = [label_w + col_w * (i + 0.5) + (split if i >= PRIOR_GENERAL else 0)
+          for i in range(len(PRIOR_COLUMNS))]
+    group_y, head_y = 84, 108
+    top = head_y + 34
+    body = []
+    right = xs[-1] + col_w / 2
+    mid = label_w + col_w * PRIOR_GENERAL + split / 2
+    for x0, x1, s in ((label_w, mid - split / 2, "Questions about any code"),
+                      (mid + split / 2, right, "Framework facts")):
+        body.append(text((x0 + x1) / 2, group_y, s, t["ink"], 12, "middle", 600))
+        body.append(f'<line x1="{x0 + 4:.1f}" y1="{group_y + 11:.1f}" x2="{x1 - 4:.1f}" '
+                    f'y2="{group_y + 11:.1f}" stroke="{t["axis"]}" stroke-width="1"/>')
+    for x, lines in zip(xs, PRIOR_COLUMNS, strict=True):
+        for j, s in enumerate(lines):
+            body.append(text(x, head_y + j * 14, s, t["ink2"], 11, "middle"))
+    body.append(f'<rect x="16" y="{top - row_h / 2:.1f}" width="{right - 8:.1f}" '
+                f'height="{row_h:.1f}" rx="4" fill="{t["s1"]}" fill-opacity="0.10"/>')
+    for i, (name, cells) in enumerate(PRIOR):
+        y = top + i * row_h
+        if i:
+            body.append(f'<line x1="24" y1="{y - row_h / 2:.1f}" x2="{right:.1f}" '
+                        f'y2="{y - row_h / 2:.1f}" stroke="{t["grid"]}" stroke-width="1"/>')
+        body.append(text(24, y, name, t["ink"], 13, weight=700 if i == 0 else 400))
+        body.extend(mark(x, y, v, t) for x, v in zip(xs, cells, strict=True))
+    body.append(f'<line x1="{mid:.1f}" y1="{group_y - 8:.1f}" x2="{mid:.1f}" '
+                f'y2="{top + (len(PRIOR) - 0.5) * row_h:.1f}" stroke="{t["axis"]}" '
+                f'stroke-width="1" stroke-dasharray="3 3"/>')
+    ly = top + len(PRIOR) * row_h + 10
+    x = 24.0
+    for v, s in (("Y", "documented"), ("P", "partly"), ("N", "not documented")):
+        body.append(mark(x + 6, ly, v, t))
+        body.append(text(x + 18, ly, s, t["ink2"], 12))
+        x += 18 + len(s) * 6.6 + 28
+    desc = ("Twelve tools by nine question types. Only codeterrain documents answers in all four "
+            "framework columns; no other tool documents front-end calls matched to routes or "
+            "pytest fixture resolution, and one other asks pytest itself.")
+    return frame("What each tool documents answering",
+                 "Read from each tool's README on PyPI, 2 Nov 2026. A reading of the docs, "
+                 "not a benchmark.", ly + 28, body, t, desc)
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, draw in (("tokens", tokens_chart), ("accuracy", accuracy_chart),
                        ("speed", speed_chart), ("field", field_chart),
-                       ("architecture", architecture_chart)):
+                       ("architecture", architecture_chart), ("prior-art", prior_art_chart)):
         for mode, theme in THEMES.items():
             path = OUT / f"{name}-{mode}.svg"
             path.write_bytes(draw(theme).encode("utf-8"))

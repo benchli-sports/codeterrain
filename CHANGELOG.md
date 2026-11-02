@@ -18,6 +18,9 @@
   as future work. SECURITY.md's third guarantee says what it covers: pytest and its known plugins
   do not write into the repository by default; target code that opens a file by absolute path still
   can.
+- A prior-art page, `docs/prior-art.md`: what twelve comparable tools document answering, read from
+  their READMEs, with a chart. None documents pytest fixture resolution, front-end calls matched to
+  routes, or routes read from the application. It is a reading of their docs, not a benchmark.
 
 ## 0.3.0 (2026-11-02)
 

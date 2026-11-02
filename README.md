@@ -269,6 +269,7 @@ knowledge-graph tool, are in [docs/why-codeterrain.md](docs/why-codeterrain.md).
 | [TypeScript pack](packages/codeterrain-typescript/README.md) | Front-end calls read with tree-sitter, and why it is the reader to install |
 | [Design notes](docs/design-v0.2.md) | The decisions behind the front-end calls and the language packs |
 | [Why codeterrain](docs/why-codeterrain.md) | The origin, the measurements, what is not proven yet |
+| [Prior art](docs/prior-art.md) | What twelve comparable tools document answering, read from their docs |
 | [Changelog](CHANGELOG.md) | What changed, release by release |
 
 ## Development

@@ -256,8 +256,10 @@ By category, without product claims:
 - **LLM-built knowledge graphs** trade exactness for coverage and cost a model run to build and refresh.
 - **Hand-written maps** go stale (section 1).
 
-We have not run a fuller prior-art sweep yet, and this section makes no claim about tools we did not
-test.
+A reading of twelve comparable tools' documentation, in [prior art](prior-art.md), found none that
+documents pytest fixture resolution, front-end calls matched to routes, or routes read from the
+application itself. That is a reading of their docs, not a test of their answers, and this section
+makes no claim about how well the tools we did not run answer.
 
 ## 8. What is not proven yet, and what comes next
 
