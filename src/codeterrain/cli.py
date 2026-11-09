@@ -791,6 +791,12 @@ def cmd_fixture(ctx: Context) -> int:
             _note(_unlisted_text(unlisted))
         return 1
     deps = fixtures_static.dependents(record.data, ctx.args.name)
+    if len(found) > 1:
+        # Several definitions: say which one each dependent gets, the conftest to edit for it.
+        # Only then is the code index needed (class bases decide a class-level override).
+        winners = impact.fixture_winners(_code_index(ctx)[1], record.data, ctx.args.name)
+        for d in deps:
+            d["gets"] = winners.get((d["kind"], d["file"], d["name"], d["line"]), "")
     if ctx.args.json:
         _emit_json(
             "fixture", record.built_at, found, dependents=deps, unlisted_test_paths=unlisted
@@ -803,7 +809,11 @@ def cmd_fixture(ctx: Context) -> int:
         lines.append("")
     lines.append(f"dependents ({len(deps)}):")
     keep = len(lines)
-    lines.extend(f"{d['kind']}  {d['name']}  {d['file']}:{d['line']}  {d['via']}" for d in deps)
+    lines.extend(
+        f"{d['kind']}  {d['name']}  {d['file']}:{d['line']}  {d['via']}"
+        + (f"  gets {d['gets'] or '-'}" if "gets" in d else "")
+        for d in deps
+    )
     _out(cut_lines(lines, ctx.args.budget, "--budget N or --json", keep=keep))
     return 0
 
