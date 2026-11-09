@@ -1337,3 +1337,40 @@ def test_the_name_read_fallback_is_in_the_json_too(warm, monkeypatch):
     assert data["handlers_reading_truncated"] is True
     _, out, _ = warm("routes", "items", "--json")
     assert "handlers_reading" not in json.loads(out)
+
+
+def test_classes_lists_bases_and_subclasses_through_aliases_and_re_exports(tmp_path, capsys):
+    root = tmp_path / "repo"
+    for rel, text in {
+        "app/__init__.py": "",
+        "app/models/__init__.py": "from app.models.base import Base\n",
+        "app/models/base.py": (
+            "from pydantic import BaseModel\n\n\nclass Base(BaseModel):\n    pass\n\n\n"
+            "class Mixin:\n    pass\n"
+        ),
+        "app/svc/__init__.py": "",
+        "app/svc/orders.py": (
+            "from app.models import Base as Model\nfrom app.models.base import Mixin\n\n\n"
+            "class Order(Mixin, Model):\n    pass\n\n\nclass Special(Order):\n    pass\n\n\n"
+            # Same name, unrelated: not a subclass.
+            "class Base:\n    pass\n\n\ndef helper():\n    pass\n"
+        ),
+    }.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text, encoding="utf-8")
+    argv = ["--root", str(root), "--cache-dir", str(tmp_path / "cache")]
+    assert main(["classes", "app.models.base.Base", *argv]) == 0
+    out = capsys.readouterr().out
+    assert "bases: pydantic.BaseModel (outside)" in out
+    assert "subclasses: 2" in out
+    assert "1      app.svc.orders.Order    app/svc/orders.py:5  app.models.base.Base" in out
+    assert "2      app.svc.orders.Special  app/svc/orders.py:9  app.svc.orders.Order" in out
+    assert main(["classes", "app.svc.orders.Order", "--json", *argv]) == 0
+    (tree,) = json.loads(capsys.readouterr().out)["rows"]
+    assert [(b["name"], b["file"]) for b in tree["bases"]] == [
+        ("app.models.base.Mixin", "app/models/base.py"),
+        ("app.models.base.Base", "app/models/base.py"),
+    ]
+    assert tree["mro"] == ["app.svc.orders.Order", "app.models.base.Mixin", "app.models.base.Base"]
+    assert main(["classes", "helper", *argv]) == 1
+    assert "is not a class" in capsys.readouterr().err

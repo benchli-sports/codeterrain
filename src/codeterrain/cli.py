@@ -176,6 +176,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(run=cmd_imports)
 
     p = sub.add_parser(
+        "classes", parents=[common], help="a Python class's bases and every subclass"
+    )
+    p.add_argument("name", help="a bare, qualified (Outer.Inner) or full dotted class name")
+    p.set_defaults(run=cmd_classes)
+
+    p = sub.add_parser(
         "impact", parents=[common],
         help="the tests that reach a Python name, through its callers and fixtures",
     )
@@ -698,6 +704,46 @@ def cmd_refs(ctx: Context) -> int:
             )
         )
     _out("\n".join(lines))
+    return 0
+
+
+def cmd_classes(ctx: Context) -> int:
+    args = ctx.args
+    built_at, index = _code_index(ctx)
+    found = index.find(args.name, kind="class")
+    if not found:
+        if index.find(args.name):
+            _out(f"{field_safe(args.name)} is not a class: terrain def {field_safe(args.name)} "
+                 "says what it is", err=True)
+            return 1
+        return _no_definition(index, args.name)
+    _note_more_matches(index, args.name, found, "class")
+    trees = [impact.class_tree(index, full) for full in found]
+    if args.json:
+        _emit_json("classes", built_at, trees)
+        return 0
+    for n, tree in enumerate(_fields(trees)):
+        if n:
+            _out("")
+        bases = [
+            f"{b['name']} ({b['file']}:{b['line']})" if b["file"] else f"{b['name']} (outside)"
+            for b in tree["bases"]
+        ]
+        subs = tree["subclasses"]
+        _out("\n".join([
+            f"class {tree['name']}  {tree['file']}:{tree['line']}",
+            f"bases: {', '.join(bases) or '-'}",
+            f"mro: {' > '.join(tree['mro'])}",
+            f"subclasses: {len(subs)}"
+            + (f" (cut at {impact.MAX_SUBCLASSES})" if tree["truncated"] else ""),
+        ]))
+        if subs:
+            _out(render_table(
+                ["depth", "class", "file:line", "via"],
+                [[str(r["depth"]), r["name"], f"{r['file']}:{r['line']}", r["base"]]
+                 for r in subs],
+                args.budget, "--json or a full dotted name",
+            ))
     return 0
 
 

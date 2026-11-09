@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- `codeterrain classes NAME`: a class's bases, its method resolution order within the repository,
+  and every subclass across modules with its depth, through imports, aliases and re-exports
+  (#1).
 - `codeterrain fixture NAME` names, for each dependent of a fixture with several definitions, the
   definition it gets (`gets FILE:LINE`, and `gets` in `--json`): a test under a nested conftest that
   overrides the fixture gets that override, not the root one the list used to sit under, so the

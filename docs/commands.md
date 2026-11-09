@@ -39,6 +39,7 @@ codeterrain def [NAME] [--kind KIND]
 codeterrain refs NAME [--tests|--code] [--by-name]
 codeterrain importers MODULE [--tests|--code]
 codeterrain imports MODULE
+codeterrain classes NAME
 codeterrain impact NAME [--depth N]
 codeterrain refresh [fixtures|calls|order|routes|code|languages]
 codeterrain --version
@@ -117,6 +118,12 @@ the local name (`--tests` and `--code` as for `refs`). `MODULE` is a full dotted
 parts (`orders`); a namespace package (no `__init__.py`) counts too. A plain `import app.orders` binds `app`, so it is listed for the package
 `app`. `codeterrain imports MODULE` lists what the module imports, resolved to full names. `def`
 and `refs` on a module name point here.
+
+`codeterrain classes NAME` lists a class's bases (each with where the repository defines it, or
+`outside`), its method resolution order as far as the repository places it, and every class below
+it across modules, nearest first, with its depth and the base it names on the way. Bases resolve
+through imports, aliases and re-exports as `def` resolves names, so an unrelated class of the same
+name is not counted. At most 2,000 subclasses are listed; the answer says when it was cut.
 
 `codeterrain impact NAME` joins the code index to the fixture index: which tests run a name. It walks
 out from the definition through its callers, three levels by default (`--depth`, at most 10). A call
