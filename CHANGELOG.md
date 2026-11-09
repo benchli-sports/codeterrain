@@ -10,6 +10,10 @@
 - The fixture view reads the `conftest.py` of each folder above a test path, up to the root, as
   pytest loads it. A root `conftest.py` beside `tests/` was not read, so its fixtures were missing
   and an override below it showed `overrides: -`.
+- `codeterrain fixture NAME` lists the dependents `impact` already counted: every test an autouse
+  definition runs for (`via autouse`; an autouse fixture used to show `dependents (0)`), and the test
+  methods a class inherits from a helper module (`inherited from FILE:LINE`). Both commands now
+  build the tests pytest collects in one place, so they cannot disagree.
 
 ## 0.3.2 (2026-11-02)
 

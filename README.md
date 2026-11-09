@@ -96,9 +96,9 @@ defined: tests/conftest.py:9
 overrides: -
 
 dependents (4):
+fixture  mod_cache  tests/conftest.py:14  arg
 fixture  _reset_state  tests/conftest.py:19  arg
 fixture  client  tests/conftest.py:34  arg
-fixture  mod_cache  tests/conftest.py:14  arg
 …
 ```
 

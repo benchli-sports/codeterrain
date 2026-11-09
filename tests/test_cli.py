@@ -109,6 +109,42 @@ def test_fixture_names_the_definition_each_dependent_gets(tmp_path, capsys):
     assert gets["test_deep"] == "tests/api/conftest.py:4"
 
 
+def test_fixture_lists_autouse_and_inherited_tests_as_pytest_runs_them(tmp_path, capsys):
+    # An autouse fixture runs for every test below its conftest without being named, and a test
+    # method a class inherits from a helper module runs in that class: both are its dependents,
+    # as `impact` already counted them.
+    root = tmp_path / "repo"
+    for rel, text in {
+        "tests/conftest.py": (
+            "import pytest\n\n\n@pytest.fixture(autouse=True)\ndef env():\n    return 1\n\n\n"
+            "@pytest.fixture\ndef token():\n    return 2\n"
+        ),
+        "tests/base_cases.py": (
+            "class BaseCases:\n    def test_inherited(self, token):\n        pass\n"
+        ),
+        "tests/test_a.py": (
+            "import pytest\n\nfrom tests.base_cases import BaseCases\n\n\n"
+            "class TestA(BaseCases):\n    pass\n\n\ndef test_plain():\n    pass\n\n\n"
+            '@pytest.mark.parametrize("env", [3])\ndef test_supplied(env):\n    pass\n'
+        ),
+    }.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text, encoding="utf-8")
+    argv = ["--root", str(root), "--cache-dir", str(tmp_path / "cache")]
+    assert main(["fixture", "env", *argv]) == 0
+    out = capsys.readouterr().out
+    assert "dependents (2):" in out
+    assert "test  TestA::test_inherited  tests/test_a.py:6  autouse" in out
+    assert "test  test_plain  tests/test_a.py:10  autouse" in out
+    # A test that parametrizes the name directly gets the parameter, never the fixture.
+    assert "test_supplied" not in out
+    assert main(["fixture", "token", "--json", *argv]) == 0
+    (row,) = json.loads(capsys.readouterr().out)["dependents"]
+    assert (row["name"], row["file"], row["line"], row["inherited"]) == (
+        "TestA::test_inherited", "tests/test_a.py", 6, "tests/base_cases.py:2"
+    )
+
+
 def test_fixture_with_one_definition_names_no_winner(run):
     _, out, _ = run("fixture", "renamed")
     assert " gets " not in out

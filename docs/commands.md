@@ -51,13 +51,15 @@ text; when none does, it lists the routes whose handler reads or calls, in its o
 containing it (`codeterrain routes legal` finds the handler that reads `LEGAL_PRIVACY_VERSION`), from the
 code index; `--json` lists them as `handlers_reading`, with `handlers_reading_truncated` when the search
 stopped early. `NODEID` is a pytest node id; a function, class or file matches its tests.
-`codeterrain fixture NAME` prints each definition of the fixture and every test and fixture that
-requests it. When there are several definitions, each dependent ends with `gets FILE:LINE`: the one
+`codeterrain fixture NAME` prints each definition of the fixture and every test and fixture pytest
+gives it: by argument, `usefixtures` or `getfixturevalue`, and (`via autouse`) every test an autouse
+definition runs for. A test method a class inherits is listed in that class, with `inherited from
+FILE:LINE` naming the method's own place; a test that parametrizes the name directly is not listed. When there are several definitions, each dependent ends with `gets FILE:LINE`: the one
 pytest gives it, and so the one to edit for it (a test gets the nearest up from its class and its
 bases, its module and its conftest folders; an override requesting its own name gets the one it
 overrides; another fixture shows `per test`, since pytest resolves that request where each test
-sits; `-` when none is visible). `--json` carries it as `gets` on each dependent. Telling them apart
-reads the code index, built on first use, for the class bases.
+sits; `-` when none is visible). `--json` carries these as `gets` and `inherited` on each
+dependent. The answer reads the code index, built on first use, as `impact` does.
 `codeterrain calls` lists the HTTP calls in `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`, `.mts` and `.cts`
 files: `<client>.get(path)` and the other verbs, `fetch(path, {method})` and object literals with a
 `url:` path (`useCustom({url, method})`, axios configs). A path written as a string, a template (`${id}`

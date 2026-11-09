@@ -360,30 +360,98 @@ class _Fixtures:
         return out
 
 
-#: What ``fixture_winners`` reports for a fixture that requests another name: pytest resolves that
-#: request where each test using the fixture sits, so the definition differs from test to test.
+#: What ``fixture_dependents`` reports as ``gets`` for a fixture that requests another name: pytest
+#: resolves that request where each test using the fixture sits, so it differs from test to test.
 PER_TEST = "per test"
 
 
-def fixture_winners(
-    index: Index, fixtures: dict[str, Any], name: str
-) -> dict[tuple[str, str, str, int], str]:
-    """For each test and fixture that requests ``name``, the definition of ``name`` pytest gives
-    it, as ``file:line``, keyed by ``(kind, file, name, line)`` of the requester. A test gets the
-    nearest definition up from its class, module and conftest folders. A fixture requesting its
-    own name gets the one it overrides; one requesting another name gets ``PER_TEST``. "" when no
-    definition is visible to it."""
-    fx = _Fixtures(fixtures, {}, _Classes(index))
-    out: dict[tuple[str, str, str, int], str] = {}
+def _tests_model(
+    index: Index, fixtures: dict[str, Any]
+) -> tuple[
+    _Classes, list[dict[str, Any]], list[dict[str, Any]],
+    dict[tuple[str, str], list[dict[str, Any]]], dict[str, list[dict[str, Any]]],
+    dict[str, list[dict[str, Any]]], _Fixtures,
+]:
+    """The tests pytest collects, as ``impact`` and ``fixture_dependents`` both see them: the
+    view's own (with marks a base class adds), the copies of inherited test methods, and the
+    fixture view arranged over them. Returns (classes, own, copied, copies, own_by_file,
+    by_file, fixtures)."""
+    classes = _Classes(index)
+    own = list(fixtures.get("tests", []))
+    copied, copies, adjusted = _inherited_tests(index, classes, own, fixtures.get("marks"))
+    own = [adjusted.get((t["file"], t["name"]), t) for t in own]
+    own_by_file: dict[str, list[dict[str, Any]]] = {}
+    for t in own:
+        own_by_file.setdefault(t["file"], []).append(t)
+    by_file = {rel: list(ts) for rel, ts in own_by_file.items()}
+    for t in copied:
+        by_file.setdefault(t["file"], []).append(t)
+    fx = _Fixtures({**fixtures, "tests": own + copied}, by_file, classes)
+    return classes, own, copied, copies, own_by_file, by_file, fx
+
+
+def fixture_dependents(
+    index: Index, fixtures: dict[str, Any], name: str, resolve: bool = False
+) -> list[dict[str, Any]]:
+    """Every fixture and test that pytest gives fixture ``name``: by argument, usefixtures or
+    getfixturevalue, and every test an autouse definition of it runs for; tests include the
+    copies of a test method a class inherits (``inherited`` names the method's own place).
+
+    With ``resolve``, each row's ``gets`` is the definition pytest gives it, as ``file:line``: a
+    test gets the nearest one up from its class and bases, module and conftest folders; a fixture
+    requesting its own name gets the one it overrides; one requesting another name gets
+    ``PER_TEST``; "" when none is visible."""
+    _, _, _, copies, _, _, fx = _tests_model(index, fixtures)
+    base_of = {
+        id(c): f"{base_file}:{c['line']}" for (base_file, _), cs in copies.items() for c in cs
+    }
+    class_lines: dict[tuple[str, str], int] = {}
+
+    def where(record: dict[str, Any], cls: str) -> int:
+        """A copy's line is its class's in the consuming file, not the base method's."""
+        if id(record) not in base_of:
+            return record["line"]
+        key = (record["file"], cls)
+        if key not in class_lines:
+            module = code_static.module_name(record["file"], index.src_package)
+            found = index.definition(f"{module}.{cls.replace('::', '.')}")
+            class_lines[key] = found[1]["line"] if found is not None else 0
+        return class_lines[key]
+
+    rows: dict[tuple[str, str, str], dict[str, Any]] = {}
+
+    def add(kind: str, record: dict[str, Any], cls: str, via: str) -> None:
+        key = (kind, record["file"], record["name"])
+        if key in rows or name in record.get("parametrized", ()):
+            return  # a test parametrizing the name directly never runs the fixture
+        row = {
+            "kind": kind, "name": record["name"], "file": record["file"],
+            "line": where(record, cls), "via": via,
+        }
+        if id(record) in base_of:
+            row["inherited"] = base_of[id(record)]
+        if resolve:
+            if kind == "fixture" and record["name"] != name:
+                row["gets"] = PER_TEST
+            else:
+                skip = record if kind == "fixture" else None
+                found = fx.visible(name, record["file"], cls, skip)
+                row["gets"] = f"{found['file']}:{found['line']}" if found is not None else ""
+        rows[key] = row
+
     for kind, record, cls in fx.requests.get(name, []):
-        if kind == "fixture" and record["name"] != name:
-            got: str = PER_TEST
-        else:
-            skip = record if kind == "fixture" else None
-            found = fx.visible(name, record["file"], cls, skip)
-            got = f"{found['file']}:{found['line']}" if found is not None else ""
-        out[(kind, record["file"], record["name"], record["line"])] = got
-    return out
+        via = (
+            "arg" if name in record["argnames"]
+            else "usefixtures" if name in record.get("usefixtures", ())
+            else "getfixturevalue"
+        )
+        add(kind, record, cls, via)
+    for each in fx.named.get(name, []):
+        for _, record, cls in fx.autouse_tests(each):
+            add("test", record, cls, "autouse")
+    return sorted(
+        rows.values(), key=lambda r: (r["kind"] != "fixture", r["file"], r["line"], r["name"])
+    )
 
 
 def _inherited_tests(
@@ -495,20 +563,9 @@ def impact(
     calls and the chain from there to a target (``via``); ``patched`` are the tests that patch a
     target; ``counts`` holds what was followed and what could not be."""
     depth = max(1, min(depth, MAX_DEPTH))
-    classes = _Classes(index)
-    own = list(fixtures.get("tests", []))
-    copied, copies, adjusted = _inherited_tests(index, classes, own, fixtures.get("marks"))
-    own = [adjusted.get((t["file"], t["name"]), t) for t in own]
-    fixtures = {**fixtures, "tests": own + copied}
+    classes, own, copied, copies, own_by_file, by_file, fx = _tests_model(index, fixtures)
     tests_in = {(t["file"], t["name"]): t for t in own}
-    own_by_file: dict[str, list[dict[str, Any]]] = {}
-    for t in own:
-        own_by_file.setdefault(t["file"], []).append(t)
-    by_file = {rel: list(ts) for rel, ts in own_by_file.items()}
-    for t in copied:
-        by_file.setdefault(t["file"], []).append(t)
     decorators = _Decorators(index, own_by_file)
-    fx = _Fixtures(fixtures, by_file, classes)
     # Each followed name -> (the name it calls, "file:line" of that call); targets map to None.
     parent: dict[str, tuple[str, str] | None] = dict.fromkeys(targets)
     reached: dict[str, dict[str, Any]] = {}
