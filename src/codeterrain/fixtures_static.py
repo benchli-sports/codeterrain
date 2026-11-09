@@ -4,7 +4,8 @@ Per file the pass records every fixture (scope, autouse, params, dependencies, l
 test function (the fixtures it requests). The facts are keyed by content hash in the cache, so an
 edit re-parses one file. Overrides and dependents are resolved by name from those facts; they are a
 static approximation of pytest's visibility rules (plugin and ``pytest_plugins`` fixtures are not
-seen, and a fixture defined outside ``test_paths`` is not either).
+seen, and a fixture defined outside ``test_paths`` is not either, except in a ``conftest.py`` of a
+folder above one: pytest loads those for the tests below them).
 """
 
 from __future__ import annotations
@@ -329,6 +330,19 @@ def is_test_module(rel: str) -> bool:
     return (name.startswith("test_") or name.endswith("_test.py")) and name.endswith(".py")
 
 
+def scanned_paths(config: Config) -> list[str]:
+    """What the fixture view reads: ``test_paths``, and the ``conftest.py`` of each folder above
+    one up to the root, which pytest loads for the tests below it (a root ``conftest.py`` beside
+    ``tests/``)."""
+    out = list(config.test_paths)
+    for entry in config.test_paths:
+        for folder in PurePosixPath(entry).parents:
+            rel = "conftest.py" if str(folder) == "." else f"{folder}/conftest.py"
+            if rel not in out:
+                out.append(rel)
+    return out
+
+
 def _directory(rel: str) -> PurePosixPath:
     return PurePosixPath(rel).parent
 
@@ -402,7 +416,7 @@ def build(cache: Cache, config: Config, force: bool = False) -> tuple[ViewRecord
 
     Returns (record, rebuilt).
     """
-    fingerprint = cache.scan(config.test_paths)
+    fingerprint = cache.scan(scanned_paths(config))
     record = cache.read_view(VIEW)
     if (
         record is not None

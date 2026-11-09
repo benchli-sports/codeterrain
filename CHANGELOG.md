@@ -7,6 +7,9 @@
   overrides the fixture gets that override, not the root one the list used to sit under, so the
   conftest to edit for it is no longer a guess. Resolution is `impact`'s: class bases, module,
   conftest folders.
+- The fixture view reads the `conftest.py` of each folder above a test path, up to the root, as
+  pytest loads it. A root `conftest.py` beside `tests/` was not read, so its fixtures were missing
+  and an override below it showed `overrides: -`.
 
 ## 0.3.2 (2026-11-02)
 

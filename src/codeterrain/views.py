@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from codeterrain import __version__, calls_static, protocol
+from codeterrain import __version__, calls_static, fixtures_static, protocol
 from codeterrain.cache import Cache, ViewRecord, changed_files
 from codeterrain.config import Config
 from codeterrain.executables import resolve_executable
@@ -146,7 +146,7 @@ def stale_files(cache: Cache, config: Config, record: ViewRecord) -> int:
     if record.view == calls_static.VIEW:
         current = calls_static.current_fingerprint(cache, config)
     elif record.view in STATIC_VIEWS:
-        current = cache.scan(config.test_paths)
+        current = cache.scan(fixtures_static.scanned_paths(config))
     else:
         current = tracked_fingerprint(cache, config)
     cache.flush()
