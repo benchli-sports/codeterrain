@@ -72,6 +72,48 @@ def test_fixture_json_and_unknown_name(run):
     assert code == 1 and out == "" and "similar: client" in err
 
 
+def test_fixture_names_the_definition_each_dependent_gets(tmp_path, capsys):
+    # A nested conftest overrides `client`: a test under it gets that one, not the root's, and
+    # a test class inherits a class-level override from a base in another file.
+    fixture = "import pytest\n\n\n@pytest.fixture\ndef client({arg}):\n    return 1\n"
+    root = tmp_path / "repo"
+    for rel, text in {
+        "tests/conftest.py": fixture.format(arg=""),
+        "tests/api/conftest.py": fixture.format(arg="client"),
+        "tests/api/v2/test_deep.py": "def test_deep(client):\n    pass\n",
+        "tests/test_top.py": "def test_top(client):\n    pass\n",
+        "tests/base.py": (
+            "import pytest\n\n\nclass Base:\n    @pytest.fixture\n"
+            "    def client(self):\n        return 2\n"
+        ),
+        "tests/test_inherit.py": (
+            "import pytest\n\nfrom tests.base import Base\n\n\n"
+            "class TestInherit(Base):\n    def test_k(self, client):\n        pass\n\n\n"
+            "@pytest.fixture\ndef wrapped(client):\n    return client\n"
+        ),
+    }.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text, encoding="utf-8")
+    argv = ["--root", str(root), "--cache-dir", str(tmp_path / "cache")]
+    assert main(["fixture", "client", *argv]) == 0
+    out = capsys.readouterr().out
+    assert "test  test_deep  tests/api/v2/test_deep.py:1  arg  gets tests/api/conftest.py:4" in out
+    assert "test  test_top  tests/test_top.py:1  arg  gets tests/conftest.py:4" in out
+    assert "TestInherit::test_k  tests/test_inherit.py:7  arg  gets tests/base.py:5" in out
+    # An override requesting its own name gets the one it overrides; another fixture's request
+    # resolves where each test using it sits.
+    assert "fixture  client  tests/api/conftest.py:4  arg  gets tests/conftest.py:4" in out
+    assert "fixture  wrapped  tests/test_inherit.py:11  arg  gets per test" in out
+    assert main(["fixture", "client", "--json", *argv]) == 0
+    gets = {d["name"]: d["gets"] for d in json.loads(capsys.readouterr().out)["dependents"]}
+    assert gets["test_deep"] == "tests/api/conftest.py:4"
+
+
+def test_fixture_with_one_definition_names_no_winner(run):
+    _, out, _ = run("fixture", "renamed")
+    assert " gets " not in out
+
+
 def test_bad_scope_and_bad_config_exit_2_with_a_message(run, tmp_path):
     code, _, err = run("fixtures", "--scope", "global")
     assert code == 2 and err.startswith("terrain: unknown scope")

@@ -360,6 +360,32 @@ class _Fixtures:
         return out
 
 
+#: What ``fixture_winners`` reports for a fixture that requests another name: pytest resolves that
+#: request where each test using the fixture sits, so the definition differs from test to test.
+PER_TEST = "per test"
+
+
+def fixture_winners(
+    index: Index, fixtures: dict[str, Any], name: str
+) -> dict[tuple[str, str, str, int], str]:
+    """For each test and fixture that requests ``name``, the definition of ``name`` pytest gives
+    it, as ``file:line``, keyed by ``(kind, file, name, line)`` of the requester. A test gets the
+    nearest definition up from its class, module and conftest folders. A fixture requesting its
+    own name gets the one it overrides; one requesting another name gets ``PER_TEST``. "" when no
+    definition is visible to it."""
+    fx = _Fixtures(fixtures, {}, _Classes(index))
+    out: dict[tuple[str, str, str, int], str] = {}
+    for kind, record, cls in fx.requests.get(name, []):
+        if kind == "fixture" and record["name"] != name:
+            got: str = PER_TEST
+        else:
+            skip = record if kind == "fixture" else None
+            found = fx.visible(name, record["file"], cls, skip)
+            got = f"{found['file']}:{found['line']}" if found is not None else ""
+        out[(kind, record["file"], record["name"], record["line"])] = got
+    return out
+
+
 def _inherited_tests(
     index: Index, classes: _Classes, tests: list[dict[str, Any]],
     marks: list[dict[str, Any]] | None = None,

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- `codeterrain fixture NAME` names, for each dependent of a fixture with several definitions, the
+  definition it gets (`gets FILE:LINE`, and `gets` in `--json`): a test under a nested conftest that
+  overrides the fixture gets that override, not the root one the list used to sit under, so the
+  conftest to edit for it is no longer a guess. Resolution is `impact`'s: class bases, module,
+  conftest folders.
+
 ## 0.3.2 (2026-11-02)
 
 - The README's links to the docs, SECURITY.md and the CHANGELOG are absolute GitHub links. PyPI
