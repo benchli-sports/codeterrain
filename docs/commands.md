@@ -40,6 +40,7 @@ codeterrain refs NAME [--tests|--code] [--by-name]
 codeterrain importers MODULE [--tests|--code]
 codeterrain imports MODULE
 codeterrain classes NAME
+codeterrain env NAME [--tests|--code]
 codeterrain impact NAME [--depth N]
 codeterrain refresh [fixtures|calls|order|routes|code|languages]
 codeterrain --version
@@ -124,6 +125,16 @@ and `refs` on a module name point here.
 it across modules, nearest first, with its depth and the base it names on the way. Bases resolve
 through imports, aliases and re-exports as `def` resolves names, so an unrelated class of the same
 name is not counted. At most 2,000 subclasses are listed; the answer says when it was cut.
+
+`codeterrain env NAME` follows an environment variable end to end: where infrastructure sets it (the
+Terraform pack reports each `env.NAME` it finds: a key of an `environment`/`variables`/`env` map, or the
+`name` of an `environment = [{ name, value }]` entry or an `env` block, with the resource it is set in;
+its value is never read into the cache or the answer), the pydantic-settings fields that read it (a
+class whose bases reach `BaseSettings`, its literal `env_prefix` and the field name in any case, or a
+literal `alias`/`validation_alias`, inherited along the bases) with each field's readers as `refs`
+finds them, and every direct read through `os` (`os.environ[...]`, `.get`, `os.getenv`, `in
+os.environ`, sets and deletes, under any import name). Only a name written as a string literal is
+seen.
 
 `codeterrain impact NAME` joins the code index to the fixture index: which tests run a name. It walks
 out from the definition through its callers, three levels by default (`--depth`, at most 10). A call

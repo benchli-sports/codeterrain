@@ -39,7 +39,7 @@ from codeterrain.fixtures_static import is_test_module
 
 VIEW = "code"
 #: The facts format: bumped whenever the facts read from a file change shape or meaning.
-OBJECT_KIND = "code-22"
+OBJECT_KIND = "code-23"
 #: A file larger than this is reported, not parsed: ``ast`` on a huge generated module costs
 #: memory out of proportion to what it tells.
 MAX_FILE_BYTES = 2_000_000
@@ -108,6 +108,13 @@ PATCH_TYPES = {
 }
 #: A base of a class (``class TestChild(Base)``), as written: ``cls`` is the class's qualified name.
 BASE_TYPES = {"line": "int", "cls": str, "base": str}
+#: A read or write of an environment variable named by a string literal: ``os.getenv("X")``,
+#: ``os.environ["X"]``, ``os.environ.get("X")``, ``"X" in os.environ``. ``head`` is the name as
+#: written (``os.environ``, ``getenv``), resolved to ``os`` through the file's imports when asked;
+#: ``how`` is "get", "read", "set", "delete", "setdefault", "pop" or "in".
+ENV_TYPES = {"line": "int", "name": str, "head": str, "how": str, "scope": str}
+#: The ``os`` names an environment read goes through, once resolved.
+ENV_HEADS = frozenset({"os.environ", "os.getenv", "os.environb", "os.getenvb"})
 #: A name used as a value, not called there. ``how`` says where: "arg" (passed to the call
 #: ``within``: ``Depends(get_settings)``, a callback), "assign" (assigned as it is to ``within``),
 #: "augment" (combined into ``within``: ``TOTAL += VALUE``), "member" (an element of a ``within``
@@ -342,6 +349,9 @@ class _Reader(ast.NodeVisitor):
         self.patches: list[dict[str, Any]] = []
         self.uses: list[dict[str, Any]] = []
         self.bases: list[dict[str, Any]] = []
+        self.envs: list[dict[str, Any]] = []
+        #: The names the file's imports bind to ``os`` or to its environment names, anywhere.
+        self._env_names: set[str] = set()
         self._spent = 0
         self._bytes = 0
         self._scope: list[str] = []
@@ -543,6 +553,9 @@ class _Reader(ast.NodeVisitor):
     visit_YieldFrom = visit_Yield
 
     def visit_Compare(self, node: ast.Compare) -> None:
+        # `"X" in os.environ`
+        if len(node.ops) == 1 and isinstance(node.ops[0], ast.In | ast.NotIn):
+            self._env(node.lineno, node.left, _dotted(node.comparators[0]), "in")
         for operand in [node.left, *node.comparators]:
             self._value(operand, "compare", "")
         self.generic_visit(node)
@@ -571,6 +584,12 @@ class _Reader(ast.NodeVisitor):
 
     def visit_Dict(self, node: ast.Dict) -> None:
         self._members(node, "dict")
+
+    def visit_Subscript(self, node: ast.Subscript) -> None:
+        # `os.environ["X"]`, read, set or deleted
+        how = {ast.Store: "set", ast.Del: "delete"}.get(type(node.ctx), "read")
+        self._env(node.lineno, node.slice, _dotted(node.value), how)
+        self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name) -> None:
         if isinstance(node.ctx, ast.Load) and id(node) not in self._seen:
@@ -678,6 +697,12 @@ class _Reader(ast.NodeVisitor):
         attr = node.func.attr if isinstance(node.func, ast.Attribute) else (
             node.func.id if isinstance(node.func, ast.Name) else ""
         )
+        if node.args:
+            # `os.getenv("X")`, `os.environ.get("X")` and the like
+            if attr in ("getenv", "getenvb"):
+                self._env(node.lineno, node.args[0], callee, "get")
+            elif attr in ("get", "setdefault", "pop") and isinstance(node.func, ast.Attribute):
+                self._env(node.lineno, node.args[0], callee.rpartition(".")[0], attr)
         scope = ".".join(self._scope)
         # The call and each of its arguments (a value use, a keyword name) count before any is
         # kept, so one call of a hundred thousand arguments is refused as a dense file is; each
@@ -813,11 +838,47 @@ class _Reader(ast.NodeVisitor):
     def _local(self, name: str) -> bool:
         return self._binder(name) == "local"
 
+    def _env(self, line: int, name: ast.expr | None, head: str, how: str) -> None:
+        """Keep an environment variable named by a string literal, through a name as written
+        (``os.environ``, ``environ``, ``getenv``); whether it is ``os``'s is resolved later."""
+        first, _, rest = head.partition(".")
+        if (
+            isinstance(name, ast.Constant) and isinstance(name.value, str)
+            and first in self._env_names and (not rest or rest in _ENV_ATTRS)
+            and not self._local(first)
+        ):
+            scope = ".".join(self._scope)
+            self._spend(1, len(scope) + len(head) + len(name.value))
+            self.envs.append(
+                {"line": line, "name": name.value, "head": head, "how": how, "scope": scope}
+            )
+
+
+#: The ``os`` attributes an environment read goes through.
+_ENV_ATTRS = frozenset({"environ", "environb", "getenv", "getenvb"})
+
+
+def _env_names(tree: ast.Module) -> set[str]:
+    """The names any import of the file binds to ``os`` (``import os as o``) or to one of
+    ``_ENV_ATTRS`` (``from os import environ as env``): only those can read the environment."""
+    out: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            # `import os.path` binds `os` too; `import os.path as p` binds the submodule.
+            out.update(
+                a.asname or "os" for a in node.names
+                if a.name == "os" or a.name.startswith("os.") and not a.asname
+            )
+        elif isinstance(node, ast.ImportFrom) and node.module == "os" and not node.level:
+            out.update(a.asname or a.name for a in node.names if a.name in _ENV_ATTRS)
+    return out
+
 
 def parse_source(source: str | bytes) -> dict[str, Any]:
     """Facts for one file's text, or its bytes: ``ast`` then honours a BOM and a coding line."""
     empty: dict[str, Any] = {
         "defs": [], "imports": [], "calls": [], "patches": [], "uses": [], "bases": [],
+        "envs": [],
     }
     if len(source) > MAX_FILE_BYTES:
         return {**empty, "error": _TOO_LARGE}
@@ -828,6 +889,7 @@ def parse_source(source: str | bytes) -> dict[str, Any]:
     try:
         tree = ast.parse(source)
         reader = _Reader()
+        reader._env_names = _env_names(tree)
         reader.visit(tree)
     except _TooDense as exc:
         return {**empty, "error": str(exc)[:MAX_ERROR_TEXT]}
@@ -835,7 +897,8 @@ def parse_source(source: str | bytes) -> dict[str, Any]:
         return {**empty, "error": f"{type(exc).__name__}: {exc}"[:MAX_ERROR_TEXT]}
     return {
         "defs": reader.defs, "imports": reader.imports, "calls": reader.calls,
-        "patches": reader.patches, "uses": reader.uses, "bases": reader.bases, "error": None,
+        "patches": reader.patches, "uses": reader.uses, "bases": reader.bases, "envs": reader.envs,
+        "error": None,
     }
 
 
@@ -949,7 +1012,9 @@ class UnsafeIndex(CorruptIndex):
     """The code index's path is a link, or another user can change it or a folder above it."""
 
 
-_TABLES = ("meta", "facts", "files", "defs", "binds", "calls", "patches", "uses")
+_TABLES = (
+    "meta", "facts", "files", "defs", "binds", "calls", "patches", "uses", "bases", "envs",
+)
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS files (
@@ -981,6 +1046,9 @@ CREATE TABLE IF NOT EXISTS bases (file INTEGER NOT NULL, cls TEXT NOT NULL, tail
     json TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS bases_class ON bases (file, cls);
 CREATE INDEX IF NOT EXISTS bases_tail ON bases (tail);
+CREATE TABLE IF NOT EXISTS envs (file INTEGER NOT NULL, name TEXT NOT NULL, json TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS envs_name ON envs (name);
+CREATE INDEX IF NOT EXISTS envs_file ON envs (file);
 """
 
 
@@ -1008,7 +1076,9 @@ def _typed(row: Any, types: dict[str, Any]) -> bool:
 def _valid_facts(facts: Any) -> bool:
     return (
         isinstance(facts, dict)
-        and set(facts) == {"defs", "imports", "calls", "patches", "uses", "bases", "error"}
+        and set(facts) == {
+            "defs", "imports", "calls", "patches", "uses", "bases", "envs", "error"
+        }
         and (facts["error"] is None or isinstance(facts["error"], str))
         and all(_typed(d, DEF_TYPES) for d in facts["defs"])
         and all(_typed(i, IMPORT_TYPES) for i in facts["imports"])
@@ -1016,6 +1086,7 @@ def _valid_facts(facts: Any) -> bool:
         and all(_typed(p, PATCH_TYPES) for p in facts["patches"])
         and all(_typed(u, USE_TYPES) for u in facts["uses"])
         and all(_typed(b, BASE_TYPES) for b in facts["bases"])
+        and all(_typed(e, ENV_TYPES) for e in facts["envs"])
     )
 
 
@@ -1181,7 +1252,7 @@ def _forget(db: sqlite3.Connection, rel: str) -> None:
     row = db.execute("SELECT id FROM files WHERE rel = ?", (rel,)).fetchone()
     if row is None:
         return
-    for table in ("defs", "binds", "calls", "patches", "uses", "bases"):
+    for table in ("defs", "binds", "calls", "patches", "uses", "bases", "envs"):
         db.execute(f"DELETE FROM {table} WHERE file = ?", (row[0],))
     db.execute("DELETE FROM files WHERE id = ?", (row[0],))
 
@@ -1244,6 +1315,10 @@ def _record(
             (fid, b["cls"], b["base"].rsplit(".", 1)[-1], _pack(b, BASE_TYPES))
             for b in facts["bases"]
         ],
+    )
+    db.executemany(
+        "INSERT INTO envs VALUES (?, ?, ?)",
+        [(fid, e["name"], _pack(e, ENV_TYPES)) for e in facts["envs"]],
     )
 
 
@@ -1735,6 +1810,26 @@ class Index:
             if self._known[prefix]:
                 return depth
         return 0
+
+    def env_reads(self, name: str, limit: int = 10_000) -> list[dict[str, Any]]:
+        """Every place that reads, sets or tests environment variable ``name`` through ``os``
+        (``os.environ``, ``os.getenv`` and their imported names), ``file`` and ``test`` added;
+        a name as written that does not resolve to ``os``'s is left out. At most ``limit``."""
+        out: list[dict[str, Any]] = []
+        for rel, raw in self.db.execute(
+            "SELECT f.rel, e.json FROM envs e JOIN files f ON f.id = e.file"
+            " WHERE e.name = ? ORDER BY f.rel, e.rowid", (name,),
+        ):
+            row = _row(raw, ENV_TYPES)
+            head, _, rest = row["head"].partition(".")
+            before = 0 if _running_scope(row["scope"]) else row["line"]
+            bound = self.binding(rel, row["scope"], head, before)
+            if bound is None or ".".join(filter(None, (bound, rest))) not in ENV_HEADS:
+                continue
+            out.append({**row, "file": rel, "test": self.is_test(rel)})
+            if len(out) >= limit:
+                break
+        return out
 
     def is_test(self, rel: str) -> bool:
         if rel not in self._tests:

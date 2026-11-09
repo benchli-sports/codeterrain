@@ -25,6 +25,7 @@ from codeterrain import (
     languages,
     protocol,
     routes_view,
+    settings_static,
     views,
 )
 from codeterrain.budget import (
@@ -180,6 +181,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("name", help="a bare, qualified (Outer.Inner) or full dotted class name")
     p.set_defaults(run=cmd_classes)
+
+    p = sub.add_parser(
+        "env", parents=[common],
+        help="an environment variable: where infrastructure sets it, the settings field it "
+        "becomes, and every reader",
+    )
+    p.add_argument("name", help="the variable's name, as the environment spells it")
+    side = p.add_mutually_exclusive_group()
+    side.add_argument("--tests", action="store_true", help="only readers in tests")
+    side.add_argument("--code", action="store_true", help="only readers outside tests")
+    p.set_defaults(run=cmd_env)
 
     p = sub.add_parser(
         "impact", parents=[common],
@@ -744,6 +756,62 @@ def cmd_classes(ctx: Context) -> int:
                  for r in subs],
                 args.budget, "--json or a full dotted name",
             ))
+    return 0
+
+
+def cmd_env(ctx: Context) -> int:
+    args = ctx.args
+    built_at, index = _code_index(ctx)
+
+    def keep(row: dict[str, Any]) -> bool:
+        return (not args.tests or row["test"]) and (not args.code or not row["test"])
+
+    sets = [
+        {"file": d["file"], "line": d["line"], "in": d["doc"], "language": language.name}
+        for language, _, d in _language_defs(ctx, f"env.{args.name}", "env")
+    ]
+    fields = settings_static.settings_fields(index, ctx.config.root, args.name)
+    for f in fields:
+        found = code_static.references(index, [f["field"]], keep, follow=True)
+        f["readers"] = [
+            {"file": r["file"], "line": r["line"], "scope": r.get("scope", ""), "how": how}
+            for how, rows in (("call", found["calls"]), ("read", found["uses"]))
+            for r in rows
+        ]
+    reads = [r for r in index.env_reads(args.name) if keep(r)]
+    if args.json:
+        _emit_json("env", built_at, reads, name=args.name, set=sets, settings=fields)
+        return 0
+    name = field_safe(args.name)
+    lines = [
+        f"env {name}: set in {_count(len(sets), 'place')}, {_count(len(fields), 'settings field')}"
+        f", read directly at {_count(len(reads), 'place')}"
+    ]
+    _out("\n".join(lines))
+    if sets:
+        _out(render_table(
+            ["set at", "in", "language"],
+            [[f"{r['file']}:{r['line']}", r["in"] or "-", r["language"]] for r in _fields(sets)],
+            args.budget, "--json",
+        ))
+    for f in _fields(fields):
+        case = "case-sensitive" if f["case_sensitive"] else "any case"
+        _out(f"settings field {f['field']}  {f['file']}:{f['line']}  of {f['cls']}  "
+             f"(reads {f['env']}, {case}): {_count(len(f['readers']), 'reader')}")
+        if f["readers"]:
+            _out(render_table(
+                ["file:line", "scope", "how"],
+                [[f"{r['file']}:{r['line']}", r["scope"] or "(module)", r["how"]]
+                 for r in f["readers"]],
+                args.budget, "--tests, --code or --json",
+            ))
+    if reads:
+        _out(render_table(
+            ["file:line", "scope", "how"],
+            [[f"{r['file']}:{r['line']}", r["scope"] or "(module)", r["how"]]
+             for r in _fields(reads)],
+            args.budget, "--tests, --code or --json",
+        ))
     return 0
 
 

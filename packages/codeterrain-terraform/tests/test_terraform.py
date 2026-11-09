@@ -517,3 +517,67 @@ def test_the_pack_answers_def_and_refs_through_terrain(tmp_path, capsys):
 def test_the_language_object_matches_the_interface():
     assert language.interface == languages.INTERFACE
     assert language.suffixes == (".tf",)
+
+
+def test_environment_variables_set_are_definitions_without_their_values():
+    # Lambda's map, an ECS container definition's list of objects and a Kubernetes `env` block
+    # each set variables; a value can be a secret, so only the name and its definition are kept.
+    source = '''\
+resource "aws_lambda_function" "api" {
+  environment {
+    variables = {
+      DATABASE_URL = var.db_url
+      API_TOKEN    = "s3cr3t-value"
+    }
+  }
+  tags = { Team = "core" }
+}
+
+resource "aws_ecs_task_definition" "worker" {
+  container_definitions = jsonencode([{
+    name = "worker"
+    environment = [
+      { name = "QUEUE", value = "jobs" },
+    ]
+  }])
+}
+
+resource "kubernetes_deployment" "web" {
+  spec {
+    container {
+      env {
+        name  = "LOG_LEVEL"
+        value = "debug"
+      }
+    }
+  }
+}
+'''
+    envs = [(d["name"], d["line"], d["doc"]) for d in read(source)["defs"] if d["kind"] == "env"]
+    assert envs == [
+        ("env.DATABASE_URL", 4, "aws_lambda_function.api"),
+        ("env.API_TOKEN", 5, "aws_lambda_function.api"),
+        ("env.QUEUE", 15, "aws_ecs_task_definition.worker"),
+        ("env.LOG_LEVEL", 24, "kubernetes_deployment.web"),
+    ]
+    # Neither a value nor an ordinary map's key (`tags`) nor the container's own name is kept.
+    text = json.dumps(read(source))
+    assert "s3cr3t-value" not in text and "jobs" not in text and "debug" not in text
+    assert "env.Team" not in text and "env.worker" not in text
+
+
+def test_env_lists_where_terraform_sets_a_variable(tmp_path, capsys):
+    root = tmp_path / "repo"
+    (root / "infra" / "prod").mkdir(parents=True)
+    (root / "app.py").write_text('import os\n\nURL = os.getenv("DATABASE_URL")\n', encoding="utf-8")
+    (root / "infra" / "prod" / "main.tf").write_text(
+        'resource "aws_lambda_function" "api" {\n  environment {\n    variables = {\n'
+        "      DATABASE_URL = var.db_url\n    }\n  }\n}\n",
+        encoding="utf-8",
+    )
+    argv = ["--root", str(root), "--cache-dir", str(tmp_path / "cache")]
+    assert main(["env", "DATABASE_URL", *argv]) == 0
+    out = capsys.readouterr().out
+    assert "set in 1 place, 0 settings fields, read directly at 1 place" in out
+    assert "infra/prod/main.tf:4  aws_lambda_function.api  terraform" in out
+    assert "app.py:3   (module)  get" in out

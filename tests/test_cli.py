@@ -1374,3 +1374,37 @@ def test_classes_lists_bases_and_subclasses_through_aliases_and_re_exports(tmp_p
     assert tree["mro"] == ["app.svc.orders.Order", "app.models.base.Mixin", "app.models.base.Base"]
     assert main(["classes", "helper", *argv]) == 1
     assert "is not a class" in capsys.readouterr().err
+
+
+def test_env_joins_settings_fields_their_readers_and_direct_reads(tmp_path, capsys):
+    root = tmp_path / "repo"
+    for rel, text in {
+        "app/__init__.py": "",
+        "app/settings.py": (
+            "from pydantic_settings import BaseSettings, SettingsConfigDict\n\n\n"
+            "class Settings(BaseSettings):\n"
+            '    model_config = SettingsConfigDict(env_prefix="APP_")\n'
+            '    database_url: str = ""\n\n\n'
+            "settings = Settings()\n"
+        ),
+        "app/db.py": (
+            "import os.path\n\nfrom app.settings import settings\n\n\n"
+            "def connect():\n"
+            '    fallback = os.environ.get("APP_DATABASE_URL")\n'
+            "    return settings.database_url or fallback\n"
+        ),
+    }.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text, encoding="utf-8")
+    argv = ["--root", str(root), "--cache-dir", str(tmp_path / "cache")]
+    assert main(["env", "APP_DATABASE_URL", *argv]) == 0
+    out = capsys.readouterr().out
+    assert "1 settings field, read directly at 1 place" in out
+    assert "settings field app.settings.Settings.database_url  app/settings.py:6" in out
+    assert "app/db.py:8  connect  read" in out
+    assert "app/db.py:7  connect  get" in out
+    assert main(["env", "APP_DATABASE_URL", "--json", *argv]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert [r["line"] for r in data["rows"]] == [7]
+    assert [r["line"] for r in data["settings"][0]["readers"]] == [8]
+    assert data["set"] == []

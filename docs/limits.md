@@ -70,6 +70,11 @@ What codeterrain does not see or bounds on purpose.
   pytest's own order, but a fixture supplied by `pytest_generate_tests`, a plugin's hooks or a
   parametrized indirect value is not seen. It follows at most 2,000 callers, expands at most 2,000
   fixtures and checks at most 1,000,000 fixture requests.
+- `codeterrain env` sees a variable named by a string literal only: `os.environ[name]` with a computed
+  name, `dotenv` files, Docker Compose and Kubernetes YAML are not read. A settings class's prefix or
+  alias counts only as a literal, and a settings class built by a factory is not seen. Terraform is
+  read by shape, not by provider schema: a map under one of its `env` keys counts wherever it sits,
+  and per-environment values in `.tfvars` or workspaces are not expanded.
 - `codeterrain callers` joins FastAPI routes only; an API served by anything else has no routes view to
   join to.
 - `codeterrain callers` reads the working copies of the backend and the front ends. A checkout that is behind

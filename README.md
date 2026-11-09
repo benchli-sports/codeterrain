@@ -120,6 +120,7 @@ Before grepping or reading files for one of these, run `codeterrain` in the repo
 - where a name is defined: `codeterrain def NAME`
 - who calls, passes or patches it: `codeterrain refs NAME`
 - a class's bases and subclasses: `codeterrain classes NAME`
+- where an environment variable is set and read: `codeterrain env NAME`
 - which tests statically reach it: `codeterrain impact NAME` (a starting point, not proof of coverage)
 - which fixtures a test gets, in order: `codeterrain setup-order NODEID`
 - a fixture and what depends on it: `codeterrain fixture NAME`
@@ -138,6 +139,7 @@ commands import the code: use them only on code you trust.
 | Who calls it, passes it, patches it? | `codeterrain refs NAME` | Follows imports and aliases, flags calls that don't fit the signature, and separates tests that patch it out |
 | Who imports this module, and what does it import? | `codeterrain importers MODULE`, `codeterrain imports MODULE` | Every import of it or of a name from it, relative imports resolved |
 | What does a class inherit, and what inherits from it? | `codeterrain classes NAME` | Bases and every subclass across modules, through aliases and re-exports; a same-named class elsewhere does not count |
+| Where is an environment variable set, and who reads it? | `codeterrain env NAME` | Terraform's per-environment settings, the pydantic-settings field it becomes and that field's readers, and every `os.environ` read under any import name |
 | Which tests statically reach it? | `codeterrain impact NAME` | Walks callers and fixtures the way pytest resolves them; what it cannot follow statically is listed, not dropped |
 | Which fixtures does a test get, in what order? | `codeterrain setup-order NODEID` | pytest's own resolution, overrides and scopes included |
 | What fixtures exist, and who uses one? | `codeterrain fixtures`, `codeterrain fixture NAME` | Which definition wins where, and every dependent |

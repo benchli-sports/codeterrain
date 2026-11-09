@@ -2267,3 +2267,45 @@ def test_importers_count_star_imports_and_namespace_packages(tmp_path):
     assert [r["imports"] for r in index.importers("app")] == ["app.settings.*", "app.orders.create"]
     # the star binding resolves nothing: the call still resolves through its own import
     assert [c["file"] for c in references(index, ["app.orders.create"])["calls"]] == ["consumer.py"]
+
+
+def test_environment_reads_resolve_to_os_through_the_files_imports(tmp_path):
+    root = tmp_path / "repo"
+    (root / "app").mkdir(parents=True)
+    (root / "app" / "__init__.py").write_text("", encoding="utf-8")
+    (root / "app" / "env.py").write_text(
+        "import os\n"
+        "from os import environ, getenv\n"
+        "from os import environ as env\n\n\n"
+        "def reads(environ_param):\n"
+        '    a = os.environ["TOKEN"]\n'
+        '    b = os.environ.get("TOKEN")\n'
+        '    c = getenv("TOKEN", "x")\n'
+        '    d = "TOKEN" in env\n'
+        '    os.environ["TOKEN"] = "1"\n'
+        '    del environ["TOKEN"]\n'
+        # A parameter, a dict of another name and a dynamic name are not `os`'s.
+        '    e = environ_param["TOKEN"]\n'
+        '    f = {"TOKEN": 1}.get("TOKEN")\n'
+        "    g = os.environ[a]\n"
+        "    return a, b, c, d, e, f, g\n\n\n"
+        "def shadowed(environ):\n"
+        '    return environ["TOKEN"]\n',
+        encoding="utf-8",
+    )
+    index = _index(root, tmp_path / "cache")
+    found = [(r["line"], r["how"], r["scope"]) for r in index.env_reads("TOKEN")]
+    assert found == [
+        (7, "read", "reads"), (8, "get", "reads"), (9, "get", "reads"), (10, "in", "reads"),
+        (11, "set", "reads"), (12, "delete", "reads"),
+    ]
+    assert index.env_reads("OTHER") == []
+
+
+def test_a_format_change_drops_every_table_it_rebuilds(tmp_path):
+    # A reset that kept a table would leave rows pointing at file ids the rebuild reuses.
+    created = {
+        line.split()[5] for line in code_static._SCHEMA.splitlines()
+        if line.startswith("CREATE TABLE")
+    }
+    assert created <= set(code_static._TABLES)

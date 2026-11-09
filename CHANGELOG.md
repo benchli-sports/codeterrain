@@ -5,6 +5,13 @@
 - `codeterrain classes NAME`: a class's bases, its method resolution order within the repository,
   and every subclass across modules with its depth, through imports, aliases and re-exports
   (#1).
+- `codeterrain env NAME`: an environment variable end to end (#2). The Terraform pack reports where
+  a variable is set (`env.NAME`, kind `env`: Lambda and App Service maps, ECS `environment` lists,
+  Kubernetes `env` blocks), never its value; pydantic-settings fields map to the variable through a
+  literal `env_prefix` or alias, with each field's readers; direct `os.environ` and `os.getenv`
+  reads, sets and tests are new facts of the code index (format `code-23`).
+- A change of the code index's format now drops its `bases` table with the others. It was kept,
+  so after an upgrade its rows could point at the file ids the rebuild reused.
 - `codeterrain fixture NAME` names, for each dependent of a fixture with several definitions, the
   definition it gets (`gets FILE:LINE`, and `gets` in `--json`): a test under a nested conftest that
   overrides the fixture gets that override, not the root one the list used to sit under, so the
