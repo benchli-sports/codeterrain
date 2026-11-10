@@ -78,3 +78,22 @@ def test_an_alias_is_read_as_written_and_case_sensitive_settings_match_exactly(t
     ]
     assert settings_fields(index, root, "DATABASE_URL") == []
     assert settings_fields(index, root, "APP__PRIVATE") == []
+
+
+def test_a_settings_class_reads_the_fields_of_a_plain_model_base(tmp_path):
+    root, index = _repo(tmp_path, {
+        "app/__init__.py": "",
+        "app/models.py": (
+            "from pydantic import BaseModel\n\n\n"
+            "class Common(BaseModel):\n    host: str = ''\n"
+        ),
+        "app/settings.py": (
+            "from pydantic_settings import BaseSettings\n\n"
+            "from app.models import Common\n\n\n"
+            "class Settings(Common, BaseSettings):\n    port: int = 0\n"
+        ),
+    })
+    # The model alone reads nothing from the environment: only the settings class is reported.
+    assert [(f["cls"], f["field"]) for f in settings_fields(index, root, "HOST")] == [
+        ("app.settings.Settings", "app.models.Common.host")
+    ]

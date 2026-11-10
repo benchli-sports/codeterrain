@@ -843,8 +843,7 @@ def cmd_raises(ctx: Context) -> int:
     _note_more_matches(index, args.name, targets)
     trees = raises.Trees(ctx.config.root)
     if args.exception:
-        found = index.find(args.exception, kind="class")
-        name = found[0] if found else args.exception
+        name = raises.named(index, args.exception)
         status = args.status if args.status is not None else raises.class_status(
             index, trees, name
         )

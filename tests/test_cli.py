@@ -1495,9 +1495,10 @@ def test_raises_keeps_the_exceptions_of_each_same_named_function_on_its_own_rout
         ("/a", "builtins.ValueError"), ("/b", "builtins.KeyError"),
     }
     assert len(data["raised"]) == 2
-    # An exception as given is still asked of every function of the name.
+    # An exception as given is still asked of every function of the name, and a built-in one is
+    # named as a raise of it is.
     assert main(["raises", "load", "--exception", "LookupError", "--json", *argv]) == 0
     rows = json.loads(capsys.readouterr().out)["rows"]
     assert {(r["path"], r["exception"]) for r in rows} == {
-        ("/a", "LookupError"), ("/b", "LookupError"),
+        ("/a", "builtins.LookupError"), ("/b", "builtins.LookupError"),
     }

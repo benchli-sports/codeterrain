@@ -3,7 +3,7 @@ from __future__ import annotations
 from codeterrain.cache import Cache
 from codeterrain.code_static import Index, update
 from codeterrain.config import load_config
-from codeterrain.raises import Trees, outcome, raised, reaching
+from codeterrain.raises import Trees, named, outcome, raised, reaching
 
 FILES = {
     "app/__init__.py": "",
@@ -147,3 +147,49 @@ def test_a_handler_file_outside_the_repository_is_not_read(tmp_path):
     )
     handler = {**HANDLERS[1], "handler": "outside.h", "file": "../outside.py"}
     assert outcome(index, Trees(root), [handler], "app.errors.Conflict", None)["status"] is None
+
+
+def test_names_as_the_running_app_has_them_join_the_index_in_a_nested_project(tmp_path):
+    # `apps/web/routes.py` run from `apps/web` is the module `routes`: the routes view names its
+    # functions `routes.NAME`, the index `apps.web.routes.NAME`.
+    root = tmp_path / "repo"
+    (root / "apps" / "web").mkdir(parents=True)
+    (root / "apps" / "web" / "routes.py").write_text(
+        "class Conflict(Exception):\n    pass\n\n\n"
+        "def load():\n    raise Conflict()\n\n\n"
+        "def endpoint():\n    return load()\n\n\n"
+        "def dep():\n    return load()\n\n\n"
+        "def other():\n    return {}\n",
+        encoding="utf-8",
+    )
+    index = Index(update(Cache(root, tmp_path / "cache"), load_config(root)))
+
+    def route(path, handler, deps=()):
+        return {**_route(path, handler, deps), "file": "apps/web/routes.py"}
+
+    routes = [
+        route("/a", "routes.endpoint"),
+        route("/b", "routes.other", ["routes.dep"]),
+        route("/d", "routes.other"),
+    ]
+    found, _ = reaching(index, Trees(root), routes, "apps.web.routes.load")
+    assert [(r["path"], via[0]) for r, via in found] == [
+        ("/a", "apps.web.routes.endpoint"), ("/b", "apps.web.routes.dep"),
+    ]
+    # The handled class is loaded under the same shorter name.
+    handler = {**HANDLERS[1], "exception": "routes.Conflict", "subclasses": [],
+               "handler": "routes.other", "file": "apps/web/routes.py"}
+    found = outcome(index, Trees(root), [handler], "apps.web.routes.Conflict", None)
+    assert found["handler"] == "routes.other"
+
+
+def test_an_exception_named_by_the_user_is_read_as_a_raise_of_it_is(tmp_path):
+    root, index = _repo(tmp_path)
+    assert named(index, "Conflict") == "app.errors.Conflict"
+    assert named(index, "ValueError") == "builtins.ValueError"
+    assert named(index, "HTTPException") == "HTTPException"
+    on_value = [{**HANDLERS[1], "exception": "builtins.ValueError", "subclasses": []}]
+    assert outcome(index, Trees(root), on_value, named(index, "ValueError"), None)["status"] == 409
+    # A class outside the repository given by its bare name is the loaded class of that name.
+    found = outcome(index, Trees(root), HANDLERS, "HTTPException", 418)
+    assert (found["status"], found["how"]) == (418, "handler")

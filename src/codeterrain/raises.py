@@ -224,15 +224,53 @@ def _lineage(index: code_static.Index, full: str) -> list[str]:
 
 
 def _same(written: str, loaded: str) -> bool:
-    """Whether ``written`` (a name as imported) can be the loaded class ``loaded``: equal, or
-    the same class name in a module of the same top-level package."""
+    """Whether ``written`` (a name as imported, of a class outside the repository) can be the
+    loaded class ``loaded``: equal, the same class name in a module of the same top-level
+    package, or, for a bare name (``--exception HTTPException``), the same class name."""
     if written == loaded:
         return True
     w_module, _, w_name = written.rpartition(".")
     l_module, _, l_name = loaded.rpartition(".")
-    return bool(w_module) and w_name == l_name and (
-        l_module == w_module or l_module.startswith(f"{w_module}.")
-    )
+    return w_name == l_name and (not w_module or l_module.startswith(f"{w_module}."))
+
+
+def _is(index: code_static.Index, name: str, loaded: str) -> bool:
+    """Whether ``name`` (an exception as the index or the code names it) is the loaded class
+    ``loaded``. A class of the repository is loaded under the index's name, or under a tail of it
+    in a nested project (``errors.Conflict`` for ``apps/web/errors.py``)."""
+    if not loaded:
+        return False
+    if index.definition(name) is not None:
+        return name == loaded or "." in loaded and name.endswith(f".{loaded}")
+    return _same(name, loaded)
+
+
+def named(index: code_static.Index, text: str) -> str:
+    """The exception a user names: a class of the repository, else a built-in one under the
+    name a raise of it is read as (``builtins.ValueError``), else as given."""
+    found = index.find(text, kind="class")
+    if found:
+        return found[0]
+    if isinstance(getattr(builtins, text, None), type):
+        return f"builtins.{text}"
+    return text
+
+
+def indexed(index: code_static.Index, runtime: str, rel: str = "") -> str:
+    """The index's name for a function as the running app names it. Its module is named as it
+    was imported, which in a nested project is a tail of the name from the repository root
+    (``routes`` for ``apps/web/routes.py``): with the file it is in, the longest such tail that
+    prefixes the name is replaced by the module's full name."""
+    # `create_app.<locals>.version` at run time is `create_app.version` in the index
+    name = runtime.replace(".<locals>.", ".")
+    if rel:
+        module = code_static.module_name(rel, index.src_package)
+        parts = module.split(".")
+        for start in range(len(parts)):
+            tail = ".".join(parts[start:])
+            if name.startswith(f"{tail}."):
+                return f"{module}{name[len(tail):]}"
+    return name
 
 
 def outcome(
@@ -247,17 +285,14 @@ def outcome(
     lineage = _lineage(index, exception)
     if chosen is None:
         for name in lineage:
-            exact = [h for h in handlers if h["exception"] == name]
-            # A class outside the repository: the name as code imports it may be a re-export
-            # (`fastapi.HTTPException` of `fastapi.exceptions.HTTPException`): the same class
-            # name in the same package. The handler of that class itself comes first...
-            if not exact and index.definition(name) is None:
-                exact = [h for h in handlers if h["exception"] and _same(name, h["exception"])]
+            # The handler of the class itself. A class outside the repository may be imported
+            # under a re-export (`fastapi.HTTPException` of `fastapi.exceptions.HTTPException`).
+            exact = [h for h in handlers if _is(index, name, h["exception"])]
             if exact:
                 chosen = exact[0]
                 break
-            # ...then the handled class nearest above it.
-            below = [h for h in handlers if any(_same(name, s) for s in h["subclasses"])]
+            # Then the handled class nearest above it, by the loaded classes below each.
+            below = [h for h in handlers if any(_is(index, name, s) for s in h["subclasses"])]
             if below:
                 chosen = min(below, key=lambda h: len(h["subclasses"]))
                 break
@@ -314,9 +349,24 @@ def reaching(
     by_handler: dict[str, list[dict[str, Any]]] = {}
     by_dependency: dict[str, list[dict[str, Any]]] = {}
     for route in routes:
-        by_handler.setdefault(route["handler"], []).append(route)
+        handler = indexed(index, route["handler"], route.get("file") or "")
+        by_handler.setdefault(handler, []).append(route)
+        # a callable instance is named by its class; its body is `__call__`
+        by_handler.setdefault(f"{handler}.__call__", []).append(route)
         for dep in route["dependencies"]:
-            by_dependency.setdefault(dep, []).append(route)
+            by_dependency.setdefault(indexed(index, dep), []).append(route)
+
+    def served(name: str) -> list[dict[str, Any]]:
+        """The routes ``name`` is the handler or a dependency of. A dependency comes without its
+        file, so one named by a tail of ``name`` that is no definition of its own is ``name``."""
+        out = [*by_handler.get(name, []), *by_dependency.get(name, [])]
+        parts = name.split(".")
+        for start in range(1, len(parts) - 1):
+            tail = ".".join(parts[start:])
+            if (tail in by_handler or tail in by_dependency) and index.definition(tail) is None:
+                out.extend([*by_handler.get(tail, []), *by_dependency.get(tail, [])])
+        return out
+
     # name -> the name it calls on the way down to `full`
     down: dict[str, str | None] = {full: None}
     level, cut = [full], False
@@ -330,7 +380,7 @@ def reaching(
 
     for step in range(depth + 1):
         for name in level:
-            for route in [*by_handler.get(name, []), *by_dependency.get(name, [])]:
+            for route in served(name):
                 key = (route["app"], route["method"], route["path"])
                 found.setdefault(key, (route, chain(name)))
         if step == depth:

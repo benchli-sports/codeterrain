@@ -128,8 +128,10 @@ def settings_fields(index: code_static.Index, root: Path, name: str) -> list[dic
     files = _Files(root)
     out: list[dict[str, Any]] = []
     for rel, cls in found:
-        # The class and its bases, nearest first: settings and fields come from the nearest.
-        mro = [c for c in classes.mro(rel, cls) if c in found]
+        # The class and its bases, nearest first: settings and fields come from the nearest. A
+        # base that is not itself a settings class (`class Common(BaseModel)`) still gives its
+        # fields to the settings class below it.
+        mro = classes.mro(rel, cls)
         config: dict[str, Any] = {}
         for c in reversed(mro):
             config.update(_config(files.body(*c)))
