@@ -109,6 +109,7 @@ asks the `iter_routes` plugin hook for its routes.
 | `routes[].dependencies` | list of string | `module.qualname` of the dependency callables declared for the route (route, router and include-time) |
 | `routes[].response_model` | string or null | response model class name |
 | `routes[].also_head` | bool (optional) | on a `GET` record, the route answers `HEAD` too (folded into the `GET` record, not listed on its own); absent means false |
+| `exception_handlers[]` | list (optional) | the handlers each app registered (`app.exception_handlers`): `app`, `exception` (`module.qualname` of the class handled, "" for a status code), `status` (the status code handled, or null), `handler` (`module.qualname`), `file`, `line`, and `subclasses` (`module.qualname` of the loaded classes below `exception`, at most 2,000; none for `Exception` and `BaseException`). Absent in a document from an older runner. |
 | `errors[]` | list | apps that failed to import: `error` is a traceback tail, `chain` (optional) lists `Type: message` from the outermost exception to its root cause. One failing app never stops the others. |
 | `notes` | list of string (optional) | informational lines, for example that imports ran inside `moto.mock_aws()`; lines starting with `warning:` (a `Host` route that was not walked) are shown by `codeterrain doctor` |
 

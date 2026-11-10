@@ -24,6 +24,7 @@ from codeterrain import (
     impact,
     languages,
     protocol,
+    raises,
     routes_view,
     settings_static,
     views,
@@ -115,6 +116,24 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--app", help="only apps whose spec contains this")
     p.add_argument("--access", help="only this access class from the route manifest")
     p.set_defaults(run=cmd_routes)
+
+    p = sub.add_parser(
+        "raises", parents=[common],
+        help="what a function raises, which routes reach it and the HTTP status each answers",
+    )
+    p.add_argument("name", help="a bare, qualified (Class.method) or full dotted name")
+    p.add_argument(
+        "--exception", help="this exception, raised where the function is reached from, instead "
+        "of the ones its own body raises",
+    )
+    p.add_argument("--status", type=int, help="with --exception: the status code it carries")
+    p.add_argument("--access", help="only routes of this access class from the route manifest")
+    p.add_argument(
+        "--depth", type=int, default=raises.DEFAULT_DEPTH,
+        help=f"levels of callers and dependencies to follow (default {raises.DEFAULT_DEPTH}, "
+        f"at most {raises.MAX_DEPTH})",
+    )
+    p.set_defaults(run=cmd_raises)
 
     p = sub.add_parser("route", parents=[common], help="one route in full")
     p.add_argument("method")
@@ -811,6 +830,86 @@ def cmd_env(ctx: Context) -> int:
             [[f"{r['file']}:{r['line']}", r["scope"] or "(module)", r["how"]]
              for r in _fields(reads)],
             args.budget, "--tests, --code or --json",
+        ))
+    return 0
+
+
+def cmd_raises(ctx: Context) -> int:
+    args = ctx.args
+    built_at, index = _code_index(ctx)
+    targets = [t for t in index.find(args.name) if index.definition(t)[1]["kind"] != "class"]
+    if not targets:
+        return _no_definition(index, args.name)
+    _note_more_matches(index, args.name, targets)
+    trees = raises.Trees(ctx.config.root)
+    if args.exception:
+        found = index.find(args.exception, kind="class")
+        name = found[0] if found else args.exception
+        status = args.status if args.status is not None else raises.class_status(
+            index, trees, name
+        )
+        thrown = [{"exception": name, "file": "", "line": 0, "status": status}]
+    else:
+        thrown = [r for t in targets for r in raises.raised(index, trees, t)]
+    served, result = _joined(ctx)
+    data = served.record.data
+    routes = routes_view.select(result.rows, access=args.access)
+    handlers = data.get("exception_handlers")
+    if handlers is None:
+        _note("the routes view was built before exception handlers were read: run "
+              "terrain refresh routes; until then every exception reads as unhandled")
+        handlers = []
+    rows, cut = [], False
+    for target in targets:
+        reached, stopped = raises.reaching(index, trees, routes, target, args.depth)
+        cut = cut or stopped
+        for route, via in reached:
+            mine = [h for h in handlers if h["app"] == route["app"]]
+            for t in thrown:
+                rows.append({
+                    "method": route["method"], "path": route["path"], "app": route["app"],
+                    "access": route["access"], "handler": route["handler"], "via": via,
+                    "exception": t["exception"], "raised_at": f"{t['file']}:{t['line']}",
+                    **raises.outcome(index, trees, mine, t["exception"], t["status"]),
+                })
+    if args.json:
+        _emit_json(
+            "raises", served.record.built_at, rows, targets=targets, raised=thrown,
+            truncated=cut, stale_files=served.stale,
+        )
+        return 0
+    lines = [*_stamp(served)]
+    for full in targets:
+        rel, d = index.definition(full)
+        lines.append(f"{d['kind']} {field_safe(full)}  {field_safe(rel)}:{d['line']}")
+    if args.exception:
+        lines.append(f"exception {field_safe(thrown[0]['exception'])} (as given)")
+    else:
+        lines.append(f"raises {_count(len(thrown), 'exception')} in its own body")
+    _out("\n".join(lines))
+    if thrown and not args.exception:
+        _out(render_table(
+            ["exception", "status at raise", "file:line"],
+            [[t["exception"], str(t["status"] or "-"), f"{t['file']}:{t['line']}"]
+             for t in _fields(thrown)],
+            args.budget, "--json",
+        ))
+    paths = {(r["method"], r["path"], r["app"]) for r in rows}
+    _out(
+        f"{_count(len(paths), 'route')} {'reaches' if len(paths) == 1 else 'reach'} it within "
+        f"{args.depth} levels of callers and "
+        "dependencies" + ("; cut at " f"{raises.MAX_FOLLOWED} functions" if cut else "")
+    )
+    if rows:
+        _out(render_table(
+            ["method", "path", "access", "exception", "status", "handler", "via"],
+            [
+                [r["method"], r["path"], r["access"] or "-", r["exception"].rpartition(".")[2],
+                 str(r["status"]) if r["status"] is not None else "?",
+                 r["handler"] or "unhandled", " > ".join(v.rpartition(".")[2] for v in r["via"])]
+                for r in _fields(rows)
+            ],
+            args.budget, "--access, --exception or --json",
         ))
     return 0
 

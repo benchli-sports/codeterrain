@@ -191,3 +191,50 @@ def iter_routes(app: Any) -> list[dict[str, Any]] | None:
         return None
     forget_host_routes()
     return list(_records(app.routes, ""))
+
+
+#: Loaded subclasses listed below one handled exception class, at most.
+MAX_HANDLED_SUBCLASSES = 2_000
+
+
+def _subclasses(cls: type) -> list[str]:
+    """``module.qualname`` of the loaded classes below ``cls``, nearest first, bounded; none for
+    ``Exception`` and ``BaseException``, which take every exception."""
+    if cls in (Exception, BaseException):
+        return []
+    out: list[str] = []
+    seen: set[type] = set()
+    todo = list(type.__subclasses__(cls))
+    while todo and len(out) < MAX_HANDLED_SUBCLASSES:
+        sub = todo.pop(0)
+        if sub in seen:
+            continue
+        seen.add(sub)
+        out.append(f"{sub.__module__}.{sub.__qualname__}")
+        todo.extend(type.__subclasses__(sub))
+    return out
+
+
+@hookimpl
+def iter_exception_handlers(app: Any) -> list[dict[str, Any]] | None:
+    try:
+        from starlette.applications import Starlette
+    except ImportError:
+        return None
+    if not isinstance(app, Starlette):
+        return None
+    out = []
+    for key, handler in (getattr(app, "exception_handlers", None) or {}).items():
+        file, line = _location(handler)
+        is_status = isinstance(key, int) and not isinstance(key, bool)
+        if not is_status and not inspect.isclass(key):
+            continue
+        out.append({
+            "exception": "" if is_status else f"{key.__module__}.{key.__qualname__}",
+            "status": key if is_status else None,
+            "handler": _callable_name(handler),
+            "file": file,
+            "line": line,
+            "subclasses": [] if is_status else _subclasses(key),
+        })
+    return out

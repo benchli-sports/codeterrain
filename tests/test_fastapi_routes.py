@@ -225,3 +225,35 @@ def test_response_models_render_as_they_read_in_source(annotation, expected):
 
     (record,) = [r for r in fastapi_routes.iter_routes(app) if r["path"] == "/x"]
     assert record["response_model"] == expected
+
+
+def test_exception_handlers_name_class_or_status_and_the_loaded_classes_below():
+    app = FastAPI()
+
+    class Base(Exception):
+        pass
+
+    class Child(Base):
+        pass
+
+    @app.exception_handler(Base)
+    async def on_base(request, exc):
+        return PlainTextResponse("x", status_code=418)
+
+    @app.exception_handler(404)
+    async def on_404(request, exc):
+        return PlainTextResponse("x", status_code=404)
+
+    found = {
+        (h["exception"].rpartition(".")[2] or h["status"]): h
+        for h in fastapi_routes.iter_exception_handlers(app)
+    }
+    assert found["Base"]["handler"].endswith("on_base")
+    assert found["Base"]["status"] is None and found["Base"]["line"] > 0
+    assert [s.rpartition(".")[2] for s in found["Base"]["subclasses"]] == ["Child"]
+    assert found[404]["exception"] == "" and found[404]["subclasses"] == []
+    # FastAPI's own handlers are registered too, with what they answer for.
+    assert found["HTTPException"]["handler"] == (
+        "fastapi.exception_handlers.http_exception_handler"
+    )
+    assert fastapi_routes.iter_exception_handlers(object()) is None

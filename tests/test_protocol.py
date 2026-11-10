@@ -103,6 +103,12 @@ def test_removing_any_required_key_is_refused(schema, remove):
         check(doc, schema)
 
 
+HANDLER = {
+    "app": "m:app", "exception": "m.Gone", "status": None, "handler": "m.on_gone",
+    "file": "m.py", "line": 3, "subclasses": ["m.Child"],
+}
+
+
 @pytest.mark.parametrize(
     ("schema", "mutate"),
     [
@@ -139,6 +145,12 @@ def test_removing_any_required_key_is_refused(schema, remove):
         (ROUTES_SCHEMA, lambda d: d["errors"][0].update(error=["x"])),
         (ROUTES_SCHEMA, lambda d: d["errors"][0].update(chain="ValueError")),
         (ROUTES_SCHEMA, lambda d: d["errors"][0].update(chain=["ok", 3])),
+        (ROUTES_SCHEMA, lambda d: d.update(exception_handlers={})),
+        (ROUTES_SCHEMA, lambda d: d.update(exception_handlers=["h"])),
+        (ROUTES_SCHEMA, lambda d: d.update(exception_handlers=[{**HANDLER, "exception": 1}])),
+        (ROUTES_SCHEMA, lambda d: d.update(exception_handlers=[{**HANDLER, "line": "1"}])),
+        (ROUTES_SCHEMA, lambda d: d.update(exception_handlers=[{**HANDLER, "status": "404"}])),
+        (ROUTES_SCHEMA, lambda d: d.update(exception_handlers=[{**HANDLER, "subclasses": [2]}])),
     ],
 )
 def test_a_wrong_type_anywhere_is_refused(schema, mutate):
@@ -153,6 +165,7 @@ def test_the_documents_the_extractors_really_write_are_accepted_in_full():
     doc["routes"][0]["response_model"] = "list[Item]"
     doc["routes"][0]["dependencies"] = ["m.dep"]
     doc["notes"] = ["warning: x"]
+    doc["exception_handlers"] = [HANDLER, {**HANDLER, "exception": "", "status": 404}]
     assert check(doc, ROUTES_SCHEMA) == doc
     order = copy.deepcopy(VALID[ORDER_SCHEMA])
     order["closures"][0][0]["params"] = True

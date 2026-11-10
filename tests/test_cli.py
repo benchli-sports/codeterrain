@@ -1408,3 +1408,60 @@ def test_env_joins_settings_fields_their_readers_and_direct_reads(tmp_path, caps
     assert [r["line"] for r in data["rows"]] == [7]
     assert [r["line"] for r in data["settings"][0]["readers"]] == [8]
     assert data["set"] == []
+
+
+def test_raises_maps_each_exception_to_the_routes_reaching_it_and_their_status(tmp_path, capsys):
+    # The statuses below are what FastAPI answers for these routes: 500, 404 and 409.
+    root = tmp_path / "repo"
+    for rel, text in {
+        "pyproject.toml": '[tool.codeterrain]\napps = ["app.main:app"]\n',
+        "app/__init__.py": "",
+        "app/errors.py": (
+            "from fastapi import HTTPException\n\n\n"
+            "class NotFound(HTTPException):\n    def __init__(self):\n"
+            "        super().__init__(status_code=404)\n\n\n"
+            "class Conflict(Exception):\n    pass\n"
+        ),
+        "app/services.py": (
+            "from app.errors import Conflict, NotFound\n\n\n"
+            "def load(order_id: int):\n"
+            "    if order_id < 0:\n        raise ValueError('negative')\n"
+            "    if order_id == 0:\n        raise NotFound()\n"
+            "    if order_id == 1:\n        raise Conflict()\n"
+            "    return {'id': order_id}\n\n\n"
+            "def current_order(order_id: int):\n    return load(order_id)\n"
+        ),
+        "app/main.py": (
+            "from fastapi import Depends, FastAPI\n"
+            "from fastapi.responses import JSONResponse\n\n"
+            "from app.errors import Conflict\n"
+            "from app.services import current_order\n\n"
+            "app = FastAPI()\n\n\n"
+            "@app.exception_handler(Conflict)\n"
+            "async def conflict_handler(request, exc):\n"
+            "    return JSONResponse({}, status_code=409)\n\n\n"
+            "def order_dep(order=Depends(current_order)):\n    return order\n\n\n"
+            '@app.get("/orders/{order_id}")\n'
+            "def get_order(order: dict = Depends(order_dep)):\n    return order\n\n\n"
+            '@app.get("/health")\n'
+            "def health():\n    return {}\n"
+        ),
+    }.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text, encoding="utf-8")
+    argv = [
+        "--root", str(root), "--cache-dir", str(tmp_path / "cache"), "--python", sys.executable,
+    ]
+    assert main(["raises", "load", "--json", *argv]) == 0
+    data = json.loads(capsys.readouterr().out)
+    got = {(r["path"], r["exception"].rpartition(".")[2], r["status"]) for r in data["rows"]}
+    assert got == {
+        ("/orders/{order_id}", "ValueError", 500),
+        ("/orders/{order_id}", "NotFound", 404),
+        ("/orders/{order_id}", "Conflict", 409),
+    }
+    via = {tuple(r["via"]) for r in data["rows"]}
+    assert via == {("app.main.order_dep", "app.services.current_order", "app.services.load")}
+    assert main(["raises", "health", "--exception", "Conflict", *argv]) == 0
+    out = capsys.readouterr().out
+    assert "1 route reaches it" in out and "/health" in out and "409" in out

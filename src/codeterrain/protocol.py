@@ -95,6 +95,27 @@ def _check_routes(doc: dict[str, Any], schema: str) -> None:
             isinstance(route.get("also_head", False), bool),
             "route also_head must be a boolean",
         )
+    handlers = doc.get("exception_handlers", [])
+    _require(schema, isinstance(handlers, list), "exception_handlers must be a list")
+    for h in handlers:
+        _require(schema, isinstance(h, dict), "each exception handler must be an object")
+        strings = ("app", "exception", "handler", "file")
+        _require(
+            schema,
+            all(isinstance(h.get(k), str) for k in strings),
+            f"exception handler {', '.join(strings)} must be strings",
+        )
+        _require(schema, _is_int(h.get("line")), "exception handler line must be an integer")
+        _require(
+            schema,
+            h.get("status") is None or _is_int(h.get("status")),
+            "exception handler status must be an integer or null",
+        )
+        _require(
+            schema,
+            _is_str_list(h.get("subclasses")),
+            "exception handler subclasses must be strings",
+        )
     for failure in doc["errors"]:
         _require(schema, isinstance(failure, dict), "each error must be an object")
         _require(

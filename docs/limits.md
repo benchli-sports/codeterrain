@@ -75,6 +75,10 @@ What codeterrain does not see or bounds on purpose.
   alias counts only as a literal, and a settings class built by a factory is not seen. Terraform is
   read by shape, not by provider schema: a map under one of its `env` keys counts wherever it sits,
   and per-environment values in `.tfvars` or workspaces are not expanded.
+- `codeterrain raises` reads a function's own `raise` statements; an exception raised by a function it
+  calls is asked about with `--exception`. A status that is not a literal at the raise site, in the
+  exception's class or in its handler shows as `?`. Middleware that turns exceptions into responses is
+  not read, and an exception raised in a background task never reaches the client.
 - `codeterrain callers` joins FastAPI routes only; an API served by anything else has no routes view to
   join to.
 - `codeterrain callers` reads the working copies of the backend and the front ends. A checkout that is behind

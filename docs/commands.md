@@ -33,6 +33,7 @@ codeterrain doctor
 codeterrain setup-order NODEID
 codeterrain routes [substring] [--app APP] [--access ACCESS]
 codeterrain route METHOD PATH
+codeterrain raises NAME [--exception E] [--status N] [--access ACCESS] [--depth N]
 codeterrain calls [substring] [--method METHOD] [--unresolved]
 codeterrain callers [METHOD PATH] [--unmatched]
 codeterrain def [NAME] [--kind KIND]
@@ -135,6 +136,22 @@ literal `alias`/`validation_alias`, inherited along the bases) with each field's
 finds them, and every direct read through `os` (`os.environ[...]`, `.get`, `os.getenv`, `in
 os.environ`, sets and deletes, under any import name). Only a name written as a string literal is
 seen.
+
+`codeterrain raises NAME` answers "this function raises: which routes reach it, and with what status?".
+It lists the exceptions the function's own body raises (a nested function's raises are its own),
+with the status the raise site states (`status_code=404`, `HTTPException(404)`,
+`status.HTTP_404_NOT_FOUND`) or the exception's class does (`status_code = 410` in its body, or
+`super().__init__(status_code=404)`); `--exception E` (and `--status N`) asks about one exception raised
+below the function instead. It walks the function's callers up to the configured apps' route handlers,
+through FastAPI dependencies too: a function in `Depends(...)` or `Security(...)` in another
+function's signature counts as called by it, and a route's own dependency callables as called by the
+route. Each route and exception gets the handler the app registered (from the routes view, which
+imports the apps: use it on code you trust): the one for the raise site's status code, else for the
+nearest class above the exception, else a catch-all `Exception` handler, else none, which answers 500.
+A handler in the repository answers with the literal `status_code` it responds with; FastAPI's own
+answers with the exception's status (422 for a validation error); `?` when it cannot be read.
+`--access` keeps one access class from the route manifest, `--depth` (default 6, at most 12) bounds the
+walk, which follows at most 2,000 functions.
 
 `codeterrain impact NAME` joins the code index to the fixture index: which tests run a name. It walks
 out from the definition through its callers, three levels by default (`--depth`, at most 10). A call
