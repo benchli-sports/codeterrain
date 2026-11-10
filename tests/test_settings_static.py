@@ -97,3 +97,24 @@ def test_a_settings_class_reads_the_fields_of_a_plain_model_base(tmp_path):
     assert [(f["cls"], f["field"]) for f in settings_fields(index, root, "HOST")] == [
         ("app.settings.Settings", "app.models.Common.host")
     ]
+
+
+def test_a_prefix_that_is_not_a_literal_leaves_its_fields_unmatched(tmp_path):
+    root, index = _repo(tmp_path, {
+        "app/__init__.py": "",
+        "app/settings.py": (
+            "from pydantic import Field\n"
+            "from pydantic_settings import BaseSettings, SettingsConfigDict\n\n"
+            'PREFIX = "APP_"\n\n\n'
+            "class Settings(BaseSettings):\n"
+            "    model_config = SettingsConfigDict(env_prefix=PREFIX)\n"
+            "    host: str = ''\n"
+            '    token: str = Field("", validation_alias="SERVICE_TOKEN")\n'
+        ),
+    })
+    # The prefix is unknown, not empty: `host` is not said to read HOST.
+    assert settings_fields(index, root, "HOST") == []
+    # A literal alias does not depend on it.
+    assert [f["field"] for f in settings_fields(index, root, "SERVICE_TOKEN")] == [
+        "app.settings.Settings.token"
+    ]

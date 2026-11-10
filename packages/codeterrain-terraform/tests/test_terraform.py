@@ -581,3 +581,36 @@ def test_env_lists_where_terraform_sets_a_variable(tmp_path, capsys):
     assert "set in 1 place, 0 settings fields, read directly at 1 place" in out
     assert "infra/prod/main.tf:4  aws_lambda_function.api  terraform" in out
     assert "app.py:3   (module)  get" in out
+
+
+def test_a_variable_named_name_in_an_assigned_map_never_gives_its_value_as_a_name():
+    # In a map of variables `name` is a variable like any other and its value can be a secret;
+    # only a record (a block, or an object of a list) names a variable with its `name`.
+    source = '''\
+resource "aws_lambda_function" "api" {
+  environment {
+    variables = {
+      name  = "secret-password"
+      TOKEN = "other-value"
+    }
+  }
+}
+
+resource "aws_ecs_task_definition" "worker" {
+  container_definitions = jsonencode([{
+    environment = [
+      { name = "QUEUE", value = "jobs" },
+      { name = "hunter2", TOKEN = "x" },
+      { name = var.queue_name, value = "jobs" },
+    ]
+  }])
+}
+'''
+    found = read(source)
+    envs = [(d["name"], d["line"]) for d in found["defs"] if d["kind"] == "env"]
+    # An object with a key that is not a record's is a map: its keys are the names.
+    assert envs == [
+        ("env.name", 4), ("env.TOKEN", 5), ("env.QUEUE", 13), ("env.name", 14), ("env.TOKEN", 14),
+    ]
+    text = json.dumps(found)
+    assert "secret-password" not in text and "other-value" not in text and "hunter2" not in text

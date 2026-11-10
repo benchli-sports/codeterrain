@@ -318,6 +318,8 @@ _ENV_KEYS = frozenset({
     "environment", "variables", "env", "environment_variables", "env_vars", "app_settings",
 })
 _ENV_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_.-]*\Z")
+#: The keys of a record that sets one variable (`{ name = "DEBUG", value = "0" }`).
+_ENV_RECORD_KEYS = frozenset({"name", "value", "value_from", "valueFrom"})
 
 
 def _envs(toks: list[Tok]) -> list[dict[str, Any]]:
@@ -325,11 +327,17 @@ def _envs(toks: list[Tok]) -> list[dict[str, Any]]:
     definition they are set in. Only names: a value can be a secret and is never kept.
 
     A name is a key of a map or block opened right after one of ``_ENV_KEYS``
-    (``variables = { DEBUG = "0" }``), or the literal ``name`` of an object or block there
-    (``environment = [{ name = "DEBUG", value = "0" }]``, ``env { name = "DEBUG" }``)."""
+    (``variables = { DEBUG = "0" }``), or the literal ``name`` of a record there
+    (``environment = [{ name = "DEBUG", value = "0" }]``, ``env { name = "DEBUG" }``). A record
+    is a block or a list's object whose keys are all a record's; a map that is assigned
+    (``variables = { name = "..." }``) is never one, so the value of its ``name`` key, which is
+    a variable's value, is not taken for a name."""
     out: list[dict[str, Any]] = []
-    # Each open bracket: its kind ("{" or "["), whether it is an env region, its entries.
-    stack: list[tuple[str, bool, list[tuple[str, int, bool]], list[tuple[str, int]]]] = []
+    # Each open bracket: its kind ("{" or "["), whether it is an env region, its entries, the
+    # literal names its `name` keys give, and whether it is assigned (`key = {`).
+    stack: list[
+        tuple[str, bool, list[tuple[str, int, bool]], list[tuple[str, int]], bool]
+    ] = []
     scope = ""
     for i, tok in enumerate(toks):
         if tok.kind == "punct" and tok.value in "{[":
@@ -352,14 +360,17 @@ def _envs(toks: list[Tok]) -> list[dict[str, Any]]:
             )
             # An object inside an env list (`environment = [{ ... }]`) is an env region too.
             inside = bool(stack) and stack[-1][0] == "[" and stack[-1][1]
-            stack.append((tok.value, bool(stack) and named or inside, [], []))
+            stack.append(
+                (tok.value, bool(stack) and named or inside, [], [], _entry(toks, i - 1))
+            )
             continue
         if tok.kind == "punct" and tok.value in "}]":
             if not stack:
                 continue
-            kind, env, entries, names = stack.pop()
+            kind, env, entries, names, assigned = stack.pop()
             if env and kind == "{":
-                if names:
+                keys = {k for k, _, nested in entries if not nested}
+                if not assigned and "name" in keys and keys <= _ENV_RECORD_KEYS:
                     out += [{"name": f"env.{n}", "kind": "env", "line": line, "doc": scope}
                             for n, line in names]
                 else:

@@ -135,7 +135,10 @@ def settings_fields(index: code_static.Index, root: Path, name: str) -> list[dic
         config: dict[str, Any] = {}
         for c in reversed(mro):
             config.update(_config(files.body(*c)))
-        prefix = config.get("env_prefix") if isinstance(config.get("env_prefix"), str) else ""
+        prefix = config.get("env_prefix", "")
+        # A prefix that is not a literal is unknown, not empty: only a literal alias, which
+        # ignores the prefix, can then be matched.
+        known = isinstance(prefix, str)
         sensitive = config.get("case_sensitive") is True
         seen: set[str] = set()
         for c in mro:
@@ -143,6 +146,8 @@ def settings_fields(index: code_static.Index, root: Path, name: str) -> list[dic
                 if field in seen:
                     continue
                 seen.add(field)
+                if alias is None and not known:
+                    continue
                 env = alias if alias is not None else f"{prefix}{field}"
                 if env == name or not sensitive and env.lower() == name.lower():
                     module = code_static.module_name(c[0], index.src_package)
@@ -151,6 +156,6 @@ def settings_fields(index: code_static.Index, root: Path, name: str) -> list[dic
                     out.append({
                         "cls": ".".join(filter(None, (here, cls.replace("::", ".")))),
                         "field": f"{owner}.{field}", "file": c[0], "line": line, "env": env,
-                        "prefix": prefix, "case_sensitive": sensitive,
+                        "prefix": prefix if known else "", "case_sensitive": sensitive,
                     })
     return out
