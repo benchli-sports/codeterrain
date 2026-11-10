@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "codeterrain"
-version = "0.3.2"
+version = "0.4.0"
 description = "terrain: answers about your code in under a second. Local, LLM-free structure facts for coding agents; Python first."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -28,7 +28,7 @@ dependencies = ["pluggy>=1.3"]
 
 [project.optional-dependencies]
 # Language packs, one extra each: pip install "codeterrain[terraform]".
-terraform = ["codeterrain-terraform>=0.2"]
+terraform = ["codeterrain-terraform>=0.3"]
 typescript = ["codeterrain-typescript>=0.1"]
 dev = ["pytest>=8", "fastapi>=0.115", "httpx", "ruff", "boto3", "codeterrain-terraform",
        "codeterrain-typescript"]

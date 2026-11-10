@@ -1,7 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 (2026-11-10)
 
+- `codeterrain-terraform` 0.3.0 carries the `env` definitions below; `codeterrain[terraform]`
+  needs it.
 - `codeterrain classes NAME`: a class's bases, its method resolution order within the repository,
   and every subclass across modules with its depth, through imports, aliases and re-exports
   (#1).

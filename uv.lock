@@ -79,7 +79,7 @@ wheels = [
 
 [[package]]
 name = "codeterrain"
-version = "0.3.2"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "pluggy" },
@@ -119,7 +119,7 @@ provides-extras = ["terraform", "typescript", "dev"]
 
 [[package]]
 name = "codeterrain-terraform"
-version = "0.2.1"
+version = "0.3.0"
 source = { editable = "packages/codeterrain-terraform" }
 dependencies = [
     { name = "codeterrain" },

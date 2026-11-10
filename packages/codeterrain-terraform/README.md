@@ -14,7 +14,7 @@ codeterrain env DATABASE_URL            # where it is set (with codeterrain's Py
 ```
 
 The `terraform` extra installs this pack beside codeterrain; the command is also installed as
-`terrain`. `codeterrain doctor` lists the installed packs (`language packs: terraform 0.2.1`).
+`terrain`. `codeterrain doctor` lists the installed packs (`language packs: terraform 0.3.0`).
 
 Names follow Terraform's own references: `aws_s3_bucket.logs`, `data.aws_ami.base`, `module.vpc`,
 `var.region`, `local.tags`, `output.url`, and `provider.aws` for both an entry of
