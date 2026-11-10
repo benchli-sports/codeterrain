@@ -311,6 +311,91 @@ def _reference(parts: list[str], iterators: frozenset[str] = frozenset()) -> str
     return None
 
 
+#: Attribute and block names whose map, block or list sets environment variables:
+#: ``environment { variables = {...} }`` (Lambda), ``environment = [{name, value}]`` (ECS
+#: container definitions), ``env { name value }`` (Kubernetes), ``app_settings`` (App Service).
+_ENV_KEYS = frozenset({
+    "environment", "variables", "env", "environment_variables", "env_vars", "app_settings",
+})
+_ENV_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_.-]*\Z")
+#: The keys of a record that sets one variable (`{ name = "DEBUG", value = "0" }`).
+_ENV_RECORD_KEYS = frozenset({"name", "value", "value_from", "valueFrom"})
+
+
+def _envs(toks: list[Tok]) -> list[dict[str, Any]]:
+    """The environment variables a file sets, as ``env.NAME`` definitions whose doc is the
+    definition they are set in. Only names: a value can be a secret and is never kept.
+
+    A name is a key of a map or block opened right after one of ``_ENV_KEYS``
+    (``variables = { DEBUG = "0" }``), or the literal ``name`` of a record there
+    (``environment = [{ name = "DEBUG", value = "0" }]``, ``env { name = "DEBUG" }``). A record
+    is a block or a list's object whose keys are all a record's; a map that is assigned
+    (``variables = { name = "..." }``) is never one, so the value of its ``name`` key, which is
+    a variable's value, is not taken for a name."""
+    out: list[dict[str, Any]] = []
+    # Each open bracket: its kind ("{" or "["), whether it is an env region, its entries, the
+    # literal names its `name` keys give, and whether it is assigned (`key = {`).
+    stack: list[
+        tuple[str, bool, list[tuple[str, int, bool]], list[tuple[str, int]], bool]
+    ] = []
+    scope = ""
+    for i, tok in enumerate(toks):
+        if tok.kind == "punct" and tok.value in "{[":
+            if not stack:
+                # A top-level block: `resource "type" "name" {` names its definition.
+                j, labels = i - 1, []
+                while j >= 0 and toks[j].kind in ("str", "ident"):
+                    labels.insert(0, toks[j].value)
+                    j -= 1
+                kind, labels = (labels[0], labels[1:]) if labels else ("", [])
+                wanted = _BLOCKS.get(kind)
+                scope = (
+                    _PREFIX[kind] + ".".join(labels)
+                    if wanted is not None and len(labels) == wanted else ""
+                )
+            key = i - 2 if _entry(toks, i - 1) else i - 1
+            opened_by = toks[key] if 0 <= key < len(toks) else None
+            named = opened_by is not None and opened_by.kind in ("ident", "str") and (
+                opened_by.value in _ENV_KEYS
+            )
+            # An object inside an env list (`environment = [{ ... }]`) is an env region too.
+            inside = bool(stack) and stack[-1][0] == "[" and stack[-1][1]
+            stack.append(
+                (tok.value, bool(stack) and named or inside, [], [], _entry(toks, i - 1))
+            )
+            continue
+        if tok.kind == "punct" and tok.value in "}]":
+            if not stack:
+                continue
+            kind, env, entries, names, assigned = stack.pop()
+            if env and kind == "{":
+                keys = {k for k, _, nested in entries if not nested}
+                if not assigned and "name" in keys and keys <= _ENV_RECORD_KEYS:
+                    out += [{"name": f"env.{n}", "kind": "env", "line": line, "doc": scope}
+                            for n, line in names]
+                else:
+                    out += [
+                        {"name": f"env.{k}", "kind": "env", "line": line, "doc": scope}
+                        for k, line, nested in entries
+                        if not nested and k not in _ENV_KEYS and _ENV_NAME.match(k)
+                    ]
+            continue
+        if (
+            stack and stack[-1][1] and stack[-1][0] == "{" and tok.kind in ("ident", "str")
+            and _entry(toks, i + 1) and not _punct(toks, i - 1, ".")
+            and (_punct(toks, i - 1, "{") or _punct(toks, i - 1, ",")
+                 or toks[i - 1].line < tok.line)
+        ):
+            value = toks[i + 2] if i + 2 < len(toks) else None
+            nested = value is not None and value.kind == "punct" and value.value in "{["
+            stack[-1][2].append((tok.value, tok.line, nested))
+            if tok.value == "name" and value is not None and value.kind == "str" and (
+                _ENV_NAME.match(value.value)
+            ):
+                stack[-1][3].append((value.value, value.line))
+    return out
+
+
 def read(source: str) -> dict[str, Any]:
     toks = _Lexer(source).run()
     iterators = _iterators(toks)
@@ -457,7 +542,7 @@ def read(source: str) -> dict[str, Any]:
             d["doc"] = ", ".join(
                 f"{key} {found[key]}" for key in ("source", "version") if key in found
             )[:MAX_DOC]
-    return {"defs": defs, "refs": refs}
+    return {"defs": defs + _envs(toks), "refs": refs}
 
 
 class _Language:

@@ -2,6 +2,38 @@
 
 ## Unreleased
 
+- `codeterrain classes NAME`: a class's bases, its method resolution order within the repository,
+  and every subclass across modules with its depth, through imports, aliases and re-exports
+  (#1).
+- `codeterrain env NAME`: an environment variable end to end (#2). The Terraform pack reports where
+  a variable is set (`env.NAME`, kind `env`: Lambda and App Service maps, ECS `environment` lists,
+  Kubernetes `env` blocks), never its value: the `name` of a record names a variable, while in an
+  assigned map of variables `name` is a key like any other, so its value is not kept. A settings
+  prefix or an alias that is not a literal (a name, a `**spread`, an `AliasPath`) leaves its fields
+  unmatched instead of reading as empty; each name of an `AliasChoices` is read, an alias inside
+  `Annotated` counts, and configuration merges as pydantic does, a later base winning.
+  pydantic-settings fields map to the variable through a
+  literal `env_prefix` or alias, with each field's readers; direct `os.environ` and `os.getenv`
+  reads, sets and tests are new facts of the code index (format `code-23`), through the names the
+  file imports them under (`from os import getenv as read_env`) and with the name given by
+  keyword (`key="NAME"`). A settings class also reads the
+  fields of a base that is a plain model (`class Settings(Common, BaseSettings)`).
+- `codeterrain raises NAME`: the exceptions a function raises, the routes that reach it through
+  callers and FastAPI dependencies (`Depends`, `Security`, and each route's own dependency
+  callables), and the status each route answers with, from the app's registered exception handlers
+  (#3). The routes document gains an optional `exception_handlers` list, read in the sandbox with
+  the routes; a view built before it says to run `terrain refresh routes`. When several functions
+  share the name, each one's exceptions are listed on the routes that reach that one; and an app's
+  handler for a class imported under a re-exported name (`fastapi.HTTPException`) is matched to
+  that class before a handler of its base. In a nested project, where the app names a module by
+  a tail of its path (`routes` for `apps/web/routes.py`), handlers, dependencies and handled
+  classes are joined to the index's names. `--exception ValueError` names a built-in class as a
+  raise of it is read. A dependency that is a callable instance is followed into its `__call__`,
+  and a handler registered for a status code answers only for an `HTTPException`, except the one
+  for 500, which takes what nothing else handles. Between two handled bases the method
+  resolution order decides.
+- A change of the code index's format now drops its `bases` table with the others. It was kept,
+  so after an upgrade its rows could point at the file ids the rebuild reused.
 - `codeterrain fixture NAME` names, for each dependent of a fixture with several definitions, the
   definition it gets (`gets FILE:LINE`, and `gets` in `--json`): a test under a nested conftest that
   overrides the fixture gets that override, not the root one the list used to sit under, so the

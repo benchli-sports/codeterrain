@@ -10,6 +10,7 @@ codeterrain refs var.region             # every expression that reads it, and th
 codeterrain def --kind module           # every module call, with its file, source and version
 codeterrain def --kind required_provider  # every pinned provider and its version constraint
 codeterrain refs provider.aws.east      # the resources and module calls that select that provider
+codeterrain env DATABASE_URL            # where it is set (with codeterrain's Python readers)
 ```
 
 The `terraform` extra installs this pack beside codeterrain; the command is also installed as
@@ -24,3 +25,9 @@ is a required provider's. A resource's `provider = aws.east` and a module's
 and heredoc templates. The reader is a tokenizer, not an evaluator: it follows no module source,
 expands no `count` or `for_each` and reads no `.tfvars`. A resource that selects no provider uses
 its default one implicitly; that is not listed as a reference. `.tf.json` files are not read.
+
+An environment variable set in an `environment`, `variables`, `env`, `environment_variables`,
+`env_vars` or `app_settings` map or block (Lambda, App Service), or named by `name` in an
+`environment = [{ name, value }]` list (ECS container definitions) or an `env { name }` block
+(Kubernetes), is a definition `env.NAME` of kind `env` whose doc is the definition it is set in.
+Its value is never kept: it can be a secret.

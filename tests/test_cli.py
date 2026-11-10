@@ -1337,3 +1337,168 @@ def test_the_name_read_fallback_is_in_the_json_too(warm, monkeypatch):
     assert data["handlers_reading_truncated"] is True
     _, out, _ = warm("routes", "items", "--json")
     assert "handlers_reading" not in json.loads(out)
+
+
+def test_classes_lists_bases_and_subclasses_through_aliases_and_re_exports(tmp_path, capsys):
+    root = tmp_path / "repo"
+    for rel, text in {
+        "app/__init__.py": "",
+        "app/models/__init__.py": "from app.models.base import Base\n",
+        "app/models/base.py": (
+            "from pydantic import BaseModel\n\n\nclass Base(BaseModel):\n    pass\n\n\n"
+            "class Mixin:\n    pass\n"
+        ),
+        "app/svc/__init__.py": "",
+        "app/svc/orders.py": (
+            "from app.models import Base as Model\nfrom app.models.base import Mixin\n\n\n"
+            "class Order(Mixin, Model):\n    pass\n\n\nclass Special(Order):\n    pass\n\n\n"
+            # Same name, unrelated: not a subclass.
+            "class Base:\n    pass\n\n\ndef helper():\n    pass\n"
+        ),
+    }.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text, encoding="utf-8")
+    argv = ["--root", str(root), "--cache-dir", str(tmp_path / "cache")]
+    assert main(["classes", "app.models.base.Base", *argv]) == 0
+    out = capsys.readouterr().out
+    assert "bases: pydantic.BaseModel (outside)" in out
+    assert "subclasses: 2" in out
+    assert "1      app.svc.orders.Order    app/svc/orders.py:5  app.models.base.Base" in out
+    assert "2      app.svc.orders.Special  app/svc/orders.py:9  app.svc.orders.Order" in out
+    assert main(["classes", "app.svc.orders.Order", "--json", *argv]) == 0
+    (tree,) = json.loads(capsys.readouterr().out)["rows"]
+    assert [(b["name"], b["file"]) for b in tree["bases"]] == [
+        ("app.models.base.Mixin", "app/models/base.py"),
+        ("app.models.base.Base", "app/models/base.py"),
+    ]
+    assert tree["mro"] == ["app.svc.orders.Order", "app.models.base.Mixin", "app.models.base.Base"]
+    assert main(["classes", "helper", *argv]) == 1
+    assert "is not a class" in capsys.readouterr().err
+
+
+def test_env_joins_settings_fields_their_readers_and_direct_reads(tmp_path, capsys):
+    root = tmp_path / "repo"
+    for rel, text in {
+        "app/__init__.py": "",
+        "app/settings.py": (
+            "from pydantic_settings import BaseSettings, SettingsConfigDict\n\n\n"
+            "class Settings(BaseSettings):\n"
+            '    model_config = SettingsConfigDict(env_prefix="APP_")\n'
+            '    database_url: str = ""\n\n\n'
+            "settings = Settings()\n"
+        ),
+        "app/db.py": (
+            "import os.path\n\nfrom app.settings import settings\n\n\n"
+            "def connect():\n"
+            '    fallback = os.environ.get("APP_DATABASE_URL")\n'
+            "    return settings.database_url or fallback\n"
+        ),
+    }.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text, encoding="utf-8")
+    argv = ["--root", str(root), "--cache-dir", str(tmp_path / "cache")]
+    assert main(["env", "APP_DATABASE_URL", *argv]) == 0
+    out = capsys.readouterr().out
+    assert "1 settings field, read directly at 1 place" in out
+    assert "settings field app.settings.Settings.database_url  app/settings.py:6" in out
+    assert "app/db.py:8  connect  read" in out
+    assert "app/db.py:7  connect  get" in out
+    assert main(["env", "APP_DATABASE_URL", "--json", *argv]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert [r["line"] for r in data["rows"]] == [7]
+    assert [r["line"] for r in data["settings"][0]["readers"]] == [8]
+    assert data["set"] == []
+
+
+def test_raises_maps_each_exception_to_the_routes_reaching_it_and_their_status(tmp_path, capsys):
+    # The statuses below are what FastAPI answers for these routes: 500, 404 and 409.
+    root = tmp_path / "repo"
+    for rel, text in {
+        "pyproject.toml": '[tool.codeterrain]\napps = ["app.main:app"]\n',
+        "app/__init__.py": "",
+        "app/errors.py": (
+            "from fastapi import HTTPException\n\n\n"
+            "class NotFound(HTTPException):\n    def __init__(self):\n"
+            "        super().__init__(status_code=404)\n\n\n"
+            "class Conflict(Exception):\n    pass\n"
+        ),
+        "app/services.py": (
+            "from app.errors import Conflict, NotFound\n\n\n"
+            "def load(order_id: int):\n"
+            "    if order_id < 0:\n        raise ValueError('negative')\n"
+            "    if order_id == 0:\n        raise NotFound()\n"
+            "    if order_id == 1:\n        raise Conflict()\n"
+            "    return {'id': order_id}\n\n\n"
+            "def current_order(order_id: int):\n    return load(order_id)\n"
+        ),
+        "app/main.py": (
+            "from fastapi import Depends, FastAPI\n"
+            "from fastapi.responses import JSONResponse\n\n"
+            "from app.errors import Conflict\n"
+            "from app.services import current_order\n\n"
+            "app = FastAPI()\n\n\n"
+            "@app.exception_handler(Conflict)\n"
+            "async def conflict_handler(request, exc):\n"
+            "    return JSONResponse({}, status_code=409)\n\n\n"
+            "def order_dep(order=Depends(current_order)):\n    return order\n\n\n"
+            '@app.get("/orders/{order_id}")\n'
+            "def get_order(order: dict = Depends(order_dep)):\n    return order\n\n\n"
+            '@app.get("/health")\n'
+            "def health():\n    return {}\n"
+        ),
+    }.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text, encoding="utf-8")
+    argv = [
+        "--root", str(root), "--cache-dir", str(tmp_path / "cache"), "--python", sys.executable,
+    ]
+    assert main(["raises", "load", "--json", *argv]) == 0
+    data = json.loads(capsys.readouterr().out)
+    got = {(r["path"], r["exception"].rpartition(".")[2], r["status"]) for r in data["rows"]}
+    assert got == {
+        ("/orders/{order_id}", "ValueError", 500),
+        ("/orders/{order_id}", "NotFound", 404),
+        ("/orders/{order_id}", "Conflict", 409),
+    }
+    via = {tuple(r["via"]) for r in data["rows"]}
+    assert via == {("app.main.order_dep", "app.services.current_order", "app.services.load")}
+    assert main(["raises", "health", "--exception", "Conflict", *argv]) == 0
+    out = capsys.readouterr().out
+    assert "1 route reaches it" in out and "/health" in out and "409" in out
+
+
+def test_raises_keeps_the_exceptions_of_each_same_named_function_on_its_own_routes(
+    tmp_path, capsys
+):
+    root = tmp_path / "repo"
+    for rel, text in {
+        "pyproject.toml": '[tool.codeterrain]\napps = ["app.main:app"]\n',
+        "app/__init__.py": "",
+        "app/a.py": "def load():\n    raise ValueError('a')\n",
+        "app/b.py": "def load():\n    raise KeyError('b')\n",
+        "app/main.py": (
+            "from fastapi import FastAPI\n\n"
+            "from app import a, b\n\n"
+            "app = FastAPI()\n\n\n"
+            '@app.get("/a")\ndef get_a():\n    return a.load()\n\n\n'
+            '@app.get("/b")\ndef get_b():\n    return b.load()\n'
+        ),
+    }.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text, encoding="utf-8")
+    argv = [
+        "--root", str(root), "--cache-dir", str(tmp_path / "cache"), "--python", sys.executable,
+    ]
+    assert main(["raises", "load", "--json", *argv]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert {(r["path"], r["exception"]) for r in data["rows"]} == {
+        ("/a", "builtins.ValueError"), ("/b", "builtins.KeyError"),
+    }
+    assert len(data["raised"]) == 2
+    # An exception as given is still asked of every function of the name, and a built-in one is
+    # named as a raise of it is.
+    assert main(["raises", "load", "--exception", "LookupError", "--json", *argv]) == 0
+    rows = json.loads(capsys.readouterr().out)["rows"]
+    assert {(r["path"], r["exception"]) for r in rows} == {
+        ("/a", "builtins.LookupError"), ("/b", "builtins.LookupError"),
+    }

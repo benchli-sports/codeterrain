@@ -454,6 +454,55 @@ def fixture_dependents(
     )
 
 
+def class_tree(index: Index, full: str) -> dict[str, Any]:
+    """The bases of class ``full`` and every class below it, across modules, through imports,
+    aliases and re-exports. ``bases`` are its direct bases in order, each with ``file`` and
+    ``line`` when the repository defines it (else from outside it); ``mro`` is its method
+    resolution order as far as the index places it; ``subclasses`` are nearest first, each with
+    its ``depth`` below ``full`` and the ``base`` it names on the way. ``truncated`` when more
+    than ``MAX_SUBCLASSES`` were found."""
+    found = index.definition(full)
+    if found is None or found[1]["kind"] != "class":
+        raise ValueError(f"{full} is not a class the index defines")
+    rel, row = found
+    classes = _Classes(index)
+    here = (rel, row["name"].replace(".", "::"))
+
+    def full_name(place: tuple[str, str]) -> str:
+        module = code_static.module_name(place[0], index.src_package)
+        return ".".join(filter(None, (module, place[1].replace("::", "."))))
+
+    def line_of(name: str) -> int:
+        at = index.definition(name)
+        return at[1]["line"] if at is not None else 0
+
+    bases = []
+    for base in index.bases(rel, row["name"]):
+        at = index.definition(base)
+        placed = at is not None and at[1]["kind"] == "class"
+        bases.append({
+            "name": base, "file": at[0] if placed else "", "line": at[1]["line"] if placed else 0,
+        })
+    depth = {here: 0}
+    subclasses = []
+    for sub in classes.subclasses(*here):
+        # Nearest first: a direct base of `sub` below `full` already has its depth.
+        via = [b for b in classes._bases(*sub) if b in depth]
+        parent = min(via, key=depth.__getitem__) if via else here
+        depth[sub] = depth[parent] + 1
+        name = full_name(sub)
+        subclasses.append({
+            "name": name, "file": sub[0], "line": line_of(name), "depth": depth[sub],
+            "base": full_name(parent),
+        })
+    subclasses.sort(key=lambda r: (r["depth"], r["file"], r["line"]))
+    return {
+        "name": full, "file": rel, "line": row["line"], "bases": bases,
+        "mro": [full_name(c) for c in classes.mro(*here)],
+        "subclasses": subclasses, "truncated": classes.cut,
+    }
+
+
 def _inherited_tests(
     index: Index, classes: _Classes, tests: list[dict[str, Any]],
     marks: list[dict[str, Any]] | None = None,

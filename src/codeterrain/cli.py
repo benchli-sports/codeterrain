@@ -24,7 +24,9 @@ from codeterrain import (
     impact,
     languages,
     protocol,
+    raises,
     routes_view,
+    settings_static,
     views,
 )
 from codeterrain.budget import (
@@ -115,6 +117,24 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--access", help="only this access class from the route manifest")
     p.set_defaults(run=cmd_routes)
 
+    p = sub.add_parser(
+        "raises", parents=[common],
+        help="what a function raises, which routes reach it and the HTTP status each answers",
+    )
+    p.add_argument("name", help="a bare, qualified (Class.method) or full dotted name")
+    p.add_argument(
+        "--exception", help="this exception, raised where the function is reached from, instead "
+        "of the ones its own body raises",
+    )
+    p.add_argument("--status", type=int, help="with --exception: the status code it carries")
+    p.add_argument("--access", help="only routes of this access class from the route manifest")
+    p.add_argument(
+        "--depth", type=int, default=raises.DEFAULT_DEPTH,
+        help=f"levels of callers and dependencies to follow (default {raises.DEFAULT_DEPTH}, "
+        f"at most {raises.MAX_DEPTH})",
+    )
+    p.set_defaults(run=cmd_raises)
+
     p = sub.add_parser("route", parents=[common], help="one route in full")
     p.add_argument("method")
     p.add_argument("path")
@@ -174,6 +194,23 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("imports", parents=[common], help="what a Python module imports")
     p.add_argument("module", help="a full dotted module name, or its last parts")
     p.set_defaults(run=cmd_imports)
+
+    p = sub.add_parser(
+        "classes", parents=[common], help="a Python class's bases and every subclass"
+    )
+    p.add_argument("name", help="a bare, qualified (Outer.Inner) or full dotted class name")
+    p.set_defaults(run=cmd_classes)
+
+    p = sub.add_parser(
+        "env", parents=[common],
+        help="an environment variable: where infrastructure sets it, the settings field it "
+        "becomes, and every reader",
+    )
+    p.add_argument("name", help="the variable's name, as the environment spells it")
+    side = p.add_mutually_exclusive_group()
+    side.add_argument("--tests", action="store_true", help="only readers in tests")
+    side.add_argument("--code", action="store_true", help="only readers outside tests")
+    p.set_defaults(run=cmd_env)
 
     p = sub.add_parser(
         "impact", parents=[common],
@@ -698,6 +735,185 @@ def cmd_refs(ctx: Context) -> int:
             )
         )
     _out("\n".join(lines))
+    return 0
+
+
+def cmd_classes(ctx: Context) -> int:
+    args = ctx.args
+    built_at, index = _code_index(ctx)
+    found = index.find(args.name, kind="class")
+    if not found:
+        if index.find(args.name):
+            _out(f"{field_safe(args.name)} is not a class: terrain def {field_safe(args.name)} "
+                 "says what it is", err=True)
+            return 1
+        return _no_definition(index, args.name)
+    _note_more_matches(index, args.name, found, "class")
+    trees = [impact.class_tree(index, full) for full in found]
+    if args.json:
+        _emit_json("classes", built_at, trees)
+        return 0
+    for n, tree in enumerate(_fields(trees)):
+        if n:
+            _out("")
+        bases = [
+            f"{b['name']} ({b['file']}:{b['line']})" if b["file"] else f"{b['name']} (outside)"
+            for b in tree["bases"]
+        ]
+        subs = tree["subclasses"]
+        _out("\n".join([
+            f"class {tree['name']}  {tree['file']}:{tree['line']}",
+            f"bases: {', '.join(bases) or '-'}",
+            f"mro: {' > '.join(tree['mro'])}",
+            f"subclasses: {len(subs)}"
+            + (f" (cut at {impact.MAX_SUBCLASSES})" if tree["truncated"] else ""),
+        ]))
+        if subs:
+            _out(render_table(
+                ["depth", "class", "file:line", "via"],
+                [[str(r["depth"]), r["name"], f"{r['file']}:{r['line']}", r["base"]]
+                 for r in subs],
+                args.budget, "--json or a full dotted name",
+            ))
+    return 0
+
+
+def cmd_env(ctx: Context) -> int:
+    args = ctx.args
+    built_at, index = _code_index(ctx)
+
+    def keep(row: dict[str, Any]) -> bool:
+        return (not args.tests or row["test"]) and (not args.code or not row["test"])
+
+    sets = [
+        {"file": d["file"], "line": d["line"], "in": d["doc"], "language": language.name}
+        for language, _, d in _language_defs(ctx, f"env.{args.name}", "env")
+    ]
+    fields = settings_static.settings_fields(index, ctx.config.root, args.name)
+    for f in fields:
+        found = code_static.references(index, [f["field"]], keep, follow=True)
+        f["readers"] = [
+            {"file": r["file"], "line": r["line"], "scope": r.get("scope", ""), "how": how}
+            for how, rows in (("call", found["calls"]), ("read", found["uses"]))
+            for r in rows
+        ]
+    reads = [r for r in index.env_reads(args.name) if keep(r)]
+    if args.json:
+        _emit_json("env", built_at, reads, name=args.name, set=sets, settings=fields)
+        return 0
+    name = field_safe(args.name)
+    lines = [
+        f"env {name}: set in {_count(len(sets), 'place')}, {_count(len(fields), 'settings field')}"
+        f", read directly at {_count(len(reads), 'place')}"
+    ]
+    _out("\n".join(lines))
+    if sets:
+        _out(render_table(
+            ["set at", "in", "language"],
+            [[f"{r['file']}:{r['line']}", r["in"] or "-", r["language"]] for r in _fields(sets)],
+            args.budget, "--json",
+        ))
+    for f in _fields(fields):
+        case = "case-sensitive" if f["case_sensitive"] else "any case"
+        _out(f"settings field {f['field']}  {f['file']}:{f['line']}  of {f['cls']}  "
+             f"(reads {f['env']}, {case}): {_count(len(f['readers']), 'reader')}")
+        if f["readers"]:
+            _out(render_table(
+                ["file:line", "scope", "how"],
+                [[f"{r['file']}:{r['line']}", r["scope"] or "(module)", r["how"]]
+                 for r in f["readers"]],
+                args.budget, "--tests, --code or --json",
+            ))
+    if reads:
+        _out(render_table(
+            ["file:line", "scope", "how"],
+            [[f"{r['file']}:{r['line']}", r["scope"] or "(module)", r["how"]]
+             for r in _fields(reads)],
+            args.budget, "--tests, --code or --json",
+        ))
+    return 0
+
+
+def cmd_raises(ctx: Context) -> int:
+    args = ctx.args
+    built_at, index = _code_index(ctx)
+    targets = [t for t in index.find(args.name) if index.definition(t)[1]["kind"] != "class"]
+    if not targets:
+        return _no_definition(index, args.name)
+    _note_more_matches(index, args.name, targets)
+    trees = raises.Trees(ctx.config.root)
+    if args.exception:
+        name = raises.named(index, args.exception)
+        status = args.status if args.status is not None else raises.class_status(
+            index, trees, name
+        )
+        thrown = [{"exception": name, "file": "", "line": 0, "status": status}]
+        # The exception as given is asked of every function of the name...
+        thrown_by = dict.fromkeys(targets, thrown)
+    else:
+        # ...and a function's own raises only of the routes that reach that function.
+        thrown_by = {t: raises.raised(index, trees, t) for t in targets}
+        thrown = [r for t in targets for r in thrown_by[t]]
+    served, result = _joined(ctx)
+    data = served.record.data
+    routes = routes_view.select(result.rows, access=args.access)
+    handlers = data.get("exception_handlers")
+    if handlers is None:
+        _note("the routes view was built before exception handlers were read: run "
+              "terrain refresh routes; until then every exception reads as unhandled")
+        handlers = []
+    rows, cut = [], False
+    for target in targets:
+        reached, stopped = raises.reaching(index, trees, routes, target, args.depth)
+        cut = cut or stopped
+        for route, via in reached:
+            mine = [h for h in handlers if h["app"] == route["app"]]
+            for t in thrown_by[target]:
+                rows.append({
+                    "method": route["method"], "path": route["path"], "app": route["app"],
+                    "access": route["access"], "handler": route["handler"], "via": via,
+                    "exception": t["exception"], "raised_at": f"{t['file']}:{t['line']}",
+                    **raises.outcome(index, trees, mine, t["exception"], t["status"]),
+                })
+    if args.json:
+        _emit_json(
+            "raises", served.record.built_at, rows, targets=targets, raised=thrown,
+            truncated=cut, stale_files=served.stale,
+        )
+        return 0
+    lines = [*_stamp(served)]
+    for full in targets:
+        rel, d = index.definition(full)
+        lines.append(f"{d['kind']} {field_safe(full)}  {field_safe(rel)}:{d['line']}")
+    if args.exception:
+        lines.append(f"exception {field_safe(thrown[0]['exception'])} (as given)")
+    else:
+        lines.append(f"raises {_count(len(thrown), 'exception')} in its own body")
+    _out("\n".join(lines))
+    if thrown and not args.exception:
+        _out(render_table(
+            ["exception", "status at raise", "file:line"],
+            [[t["exception"], str(t["status"] or "-"), f"{t['file']}:{t['line']}"]
+             for t in _fields(thrown)],
+            args.budget, "--json",
+        ))
+    paths = {(r["method"], r["path"], r["app"]) for r in rows}
+    _out(
+        f"{_count(len(paths), 'route')} {'reaches' if len(paths) == 1 else 'reach'} it within "
+        f"{args.depth} levels of callers and "
+        "dependencies" + ("; cut at " f"{raises.MAX_FOLLOWED} functions" if cut else "")
+    )
+    if rows:
+        _out(render_table(
+            ["method", "path", "access", "exception", "status", "handler", "via"],
+            [
+                [r["method"], r["path"], r["access"] or "-", r["exception"].rpartition(".")[2],
+                 str(r["status"]) if r["status"] is not None else "?",
+                 r["handler"] or "unhandled", " > ".join(v.rpartition(".")[2] for v in r["via"])]
+                for r in _fields(rows)
+            ],
+            args.budget, "--access, --exception or --json",
+        ))
     return 0
 
 

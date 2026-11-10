@@ -33,12 +33,15 @@ codeterrain doctor
 codeterrain setup-order NODEID
 codeterrain routes [substring] [--app APP] [--access ACCESS]
 codeterrain route METHOD PATH
+codeterrain raises NAME [--exception E] [--status N] [--access ACCESS] [--depth N]
 codeterrain calls [substring] [--method METHOD] [--unresolved]
 codeterrain callers [METHOD PATH] [--unmatched]
 codeterrain def [NAME] [--kind KIND]
 codeterrain refs NAME [--tests|--code] [--by-name]
 codeterrain importers MODULE [--tests|--code]
 codeterrain imports MODULE
+codeterrain classes NAME
+codeterrain env NAME [--tests|--code]
 codeterrain impact NAME [--depth N]
 codeterrain refresh [fixtures|calls|order|routes|code|languages]
 codeterrain --version
@@ -117,6 +120,38 @@ the local name (`--tests` and `--code` as for `refs`). `MODULE` is a full dotted
 parts (`orders`); a namespace package (no `__init__.py`) counts too. A plain `import app.orders` binds `app`, so it is listed for the package
 `app`. `codeterrain imports MODULE` lists what the module imports, resolved to full names. `def`
 and `refs` on a module name point here.
+
+`codeterrain classes NAME` lists a class's bases (each with where the repository defines it, or
+`outside`), its method resolution order as far as the repository places it, and every class below
+it across modules, nearest first, with its depth and the base it names on the way. Bases resolve
+through imports, aliases and re-exports as `def` resolves names, so an unrelated class of the same
+name is not counted. At most 2,000 subclasses are listed; the answer says when it was cut.
+
+`codeterrain env NAME` follows an environment variable end to end: where infrastructure sets it (the
+Terraform pack reports each `env.NAME` it finds: a key of an `environment`/`variables`/`env` map, or the
+`name` of an `environment = [{ name, value }]` entry or an `env` block, with the resource it is set in;
+its value is never read into the cache or the answer), the pydantic-settings fields that read it (a
+class whose bases reach `BaseSettings`, its literal `env_prefix` and the field name in any case, or a
+literal `alias`/`validation_alias`, inherited along the bases) with each field's readers as `refs`
+finds them, and every direct read through `os` (`os.environ[...]`, `.get`, `os.getenv`, `in
+os.environ`, sets and deletes, under any import name). Only a name written as a string literal is
+seen.
+
+`codeterrain raises NAME` answers "this function raises: which routes reach it, and with what status?".
+It lists the exceptions the function's own body raises (a nested function's raises are its own),
+with the status the raise site states (`status_code=404`, `HTTPException(404)`,
+`status.HTTP_404_NOT_FOUND`) or the exception's class does (`status_code = 410` in its body, or
+`super().__init__(status_code=404)`); `--exception E` (and `--status N`) asks about one exception raised
+below the function instead. It walks the function's callers up to the configured apps' route handlers,
+through FastAPI dependencies too: a function in `Depends(...)` or `Security(...)` in another
+function's signature counts as called by it, and a route's own dependency callables as called by the
+route. Each route and exception gets the handler the app registered (from the routes view, which
+imports the apps: use it on code you trust): the one for the raise site's status code, else for the
+nearest class above the exception, else a catch-all `Exception` handler, else none, which answers 500.
+A handler in the repository answers with the literal `status_code` it responds with; FastAPI's own
+answers with the exception's status (422 for a validation error); `?` when it cannot be read.
+`--access` keeps one access class from the route manifest, `--depth` (default 6, at most 12) bounds the
+walk, which follows at most 2,000 functions.
 
 `codeterrain impact NAME` joins the code index to the fixture index: which tests run a name. It walks
 out from the definition through its callers, three levels by default (`--depth`, at most 10). A call

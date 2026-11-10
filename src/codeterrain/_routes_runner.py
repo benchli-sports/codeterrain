@@ -58,6 +58,7 @@ def collect(
     apps: list[str], plugins: list[str], root: Path, moto_mock: bool
 ) -> dict[str, Any]:
     routes: list[dict[str, Any]] = []
+    handlers: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
     notes: list[str] = []
     sys.path.insert(0, str(root))
@@ -93,10 +94,20 @@ def collect(
                 routes.append(
                     {**record, "app": spec, "file": relative_file(record["file"], root)}
                 )
+            try:
+                registered = manager.hook.iter_exception_handlers(app=app) or []
+            except Exception as exc:  # the routes stand; the handlers are reported missing
+                notes.append(f"warning: {spec}: exception handlers not read: {exc}")
+                registered = []
+            for record in registered:
+                handlers.append(
+                    {**record, "app": spec, "file": relative_file(record["file"], root)}
+                )
     return {
         "schema": SCHEMA,
         "generator": {"name": "codeterrain-routes-runner", "python": sys.version.split()[0]},
         "routes": routes,
+        "exception_handlers": handlers,
         "errors": errors,
         "notes": notes,
     }
