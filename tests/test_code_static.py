@@ -2302,6 +2302,27 @@ def test_environment_reads_resolve_to_os_through_the_files_imports(tmp_path):
     assert index.env_reads("OTHER") == []
 
 
+def test_a_getenv_call_through_an_import_alias_is_an_environment_read(tmp_path):
+    root = tmp_path / "repo"
+    (root / "app").mkdir(parents=True)
+    (root / "app" / "__init__.py").write_text("", encoding="utf-8")
+    (root / "app" / "env.py").write_text(
+        "from os import environ as env\n"
+        "from os import getenv as read_env\n\n\n"
+        "def reads(other):\n"
+        '    a = read_env("TOKEN")\n'
+        # Another function of any name, and a parameter that shadows the alias, are not.
+        '    b = other("TOKEN")\n'
+        "    return a, b\n\n\n"
+        "def shadowed(read_env):\n"
+        '    return read_env("TOKEN")\n',
+        encoding="utf-8",
+    )
+    index = _index(root, tmp_path / "cache")
+    found = [(r["line"], r["how"], r["scope"]) for r in index.env_reads("TOKEN")]
+    assert found == [(6, "get", "reads")]
+
+
 def test_a_format_change_drops_every_table_it_rebuilds(tmp_path):
     # A reset that kept a table would leave rows pointing at file ids the rebuild reuses.
     created = {

@@ -350,8 +350,9 @@ class _Reader(ast.NodeVisitor):
         self.uses: list[dict[str, Any]] = []
         self.bases: list[dict[str, Any]] = []
         self.envs: list[dict[str, Any]] = []
-        #: The names the file's imports bind to ``os`` or to its environment names, anywhere.
-        self._env_names: set[str] = set()
+        #: The names the file's imports bind to ``os`` or to its environment names, anywhere,
+        #: each with the ``os`` name it is bound to.
+        self._env_names: dict[str, str] = {}
         self._spent = 0
         self._bytes = 0
         self._scope: list[str] = []
@@ -699,7 +700,10 @@ class _Reader(ast.NodeVisitor):
         )
         if node.args:
             # `os.getenv("X")`, `os.environ.get("X")` and the like
-            if attr in ("getenv", "getenvb"):
+            # and `read_env("X")` after `from os import getenv as read_env`
+            if attr in _GETENV or (
+                isinstance(node.func, ast.Name) and self._env_names.get(attr) in _GETENV
+            ):
                 self._env(node.lineno, node.args[0], callee, "get")
             elif attr in ("get", "setdefault", "pop") and isinstance(node.func, ast.Attribute):
                 self._env(node.lineno, node.args[0], callee.rpartition(".")[0], attr)
@@ -856,21 +860,24 @@ class _Reader(ast.NodeVisitor):
 
 #: The ``os`` attributes an environment read goes through.
 _ENV_ATTRS = frozenset({"environ", "environb", "getenv", "getenvb"})
+#: Those of them that are called with the variable's name.
+_GETENV = frozenset({"getenv", "getenvb"})
 
 
-def _env_names(tree: ast.Module) -> set[str]:
+def _env_names(tree: ast.Module) -> dict[str, str]:
     """The names any import of the file binds to ``os`` (``import os as o``) or to one of
-    ``_ENV_ATTRS`` (``from os import environ as env``): only those can read the environment."""
-    out: set[str] = set()
+    ``_ENV_ATTRS`` (``from os import environ as env``), each with what it is bound to (``os`` or
+    the attribute): only those can read the environment."""
+    out: dict[str, str] = {}
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             # `import os.path` binds `os` too; `import os.path as p` binds the submodule.
             out.update(
-                a.asname or "os" for a in node.names
+                (a.asname or "os", "os") for a in node.names
                 if a.name == "os" or a.name.startswith("os.") and not a.asname
             )
         elif isinstance(node, ast.ImportFrom) and node.module == "os" and not node.level:
-            out.update(a.asname or a.name for a in node.names if a.name in _ENV_ATTRS)
+            out.update((a.asname or a.name, a.name) for a in node.names if a.name in _ENV_ATTRS)
     return out
 
 

@@ -126,6 +126,18 @@ def test_the_status_comes_from_the_nearest_handler_or_is_500(tmp_path):
     assert status("builtins.ValueError", None, catch_all) == 409
 
 
+def test_a_handler_of_the_re_exported_class_itself_wins_over_one_of_its_base(tmp_path):
+    # `fastapi.HTTPException` as code imports it is the loaded `fastapi.exceptions.HTTPException`:
+    # the app's handler for that class answers, not the framework's for the Starlette base.
+    root, index = _repo(tmp_path)
+    own = {**HANDLERS[1], "exception": "fastapi.exceptions.HTTPException", "subclasses": []}
+    for handlers in ([*HANDLERS, own], [own, *HANDLERS]):
+        found = outcome(index, Trees(root), handlers, "fastapi.HTTPException", None)
+        assert (found["status"], found["handler"]) == (409, "app.main.conflict_handler")
+        # A subclass in the repository reaches it through its base outside.
+        assert outcome(index, Trees(root), handlers, "app.errors.NotFound", None)["status"] == 409
+
+
 def test_a_handler_file_outside_the_repository_is_not_read(tmp_path):
     # The routes view's handler file comes from the child that imported the target.
     root, index = _repo(tmp_path)

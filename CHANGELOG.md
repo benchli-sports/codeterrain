@@ -9,12 +9,16 @@
   a variable is set (`env.NAME`, kind `env`: Lambda and App Service maps, ECS `environment` lists,
   Kubernetes `env` blocks), never its value; pydantic-settings fields map to the variable through a
   literal `env_prefix` or alias, with each field's readers; direct `os.environ` and `os.getenv`
-  reads, sets and tests are new facts of the code index (format `code-23`).
+  reads, sets and tests are new facts of the code index (format `code-23`), through the names the
+  file imports them under (`from os import getenv as read_env`).
 - `codeterrain raises NAME`: the exceptions a function raises, the routes that reach it through
   callers and FastAPI dependencies (`Depends`, `Security`, and each route's own dependency
   callables), and the status each route answers with, from the app's registered exception handlers
   (#3). The routes document gains an optional `exception_handlers` list, read in the sandbox with
-  the routes; a view built before it says to run `terrain refresh routes`.
+  the routes; a view built before it says to run `terrain refresh routes`. When several functions
+  share the name, each one's exceptions are listed on the routes that reach that one; and an app's
+  handler for a class imported under a re-exported name (`fastapi.HTTPException`) is matched to
+  that class before a handler of its base.
 - A change of the code index's format now drops its `bases` table with the others. It was kept,
   so after an upgrade its rows could point at the file ids the rebuild reused.
 - `codeterrain fixture NAME` names, for each dependent of a fixture with several definitions, the

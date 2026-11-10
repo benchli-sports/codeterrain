@@ -849,8 +849,12 @@ def cmd_raises(ctx: Context) -> int:
             index, trees, name
         )
         thrown = [{"exception": name, "file": "", "line": 0, "status": status}]
+        # The exception as given is asked of every function of the name...
+        thrown_by = dict.fromkeys(targets, thrown)
     else:
-        thrown = [r for t in targets for r in raises.raised(index, trees, t)]
+        # ...and a function's own raises only of the routes that reach that function.
+        thrown_by = {t: raises.raised(index, trees, t) for t in targets}
+        thrown = [r for t in targets for r in thrown_by[t]]
     served, result = _joined(ctx)
     data = served.record.data
     routes = routes_view.select(result.rows, access=args.access)
@@ -865,7 +869,7 @@ def cmd_raises(ctx: Context) -> int:
         cut = cut or stopped
         for route, via in reached:
             mine = [h for h in handlers if h["app"] == route["app"]]
-            for t in thrown:
+            for t in thrown_by[target]:
                 rows.append({
                     "method": route["method"], "path": route["path"], "app": route["app"],
                     "access": route["access"], "handler": route["handler"], "via": via,

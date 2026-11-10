@@ -1465,3 +1465,39 @@ def test_raises_maps_each_exception_to_the_routes_reaching_it_and_their_status(t
     assert main(["raises", "health", "--exception", "Conflict", *argv]) == 0
     out = capsys.readouterr().out
     assert "1 route reaches it" in out and "/health" in out and "409" in out
+
+
+def test_raises_keeps_the_exceptions_of_each_same_named_function_on_its_own_routes(
+    tmp_path, capsys
+):
+    root = tmp_path / "repo"
+    for rel, text in {
+        "pyproject.toml": '[tool.codeterrain]\napps = ["app.main:app"]\n',
+        "app/__init__.py": "",
+        "app/a.py": "def load():\n    raise ValueError('a')\n",
+        "app/b.py": "def load():\n    raise KeyError('b')\n",
+        "app/main.py": (
+            "from fastapi import FastAPI\n\n"
+            "from app import a, b\n\n"
+            "app = FastAPI()\n\n\n"
+            '@app.get("/a")\ndef get_a():\n    return a.load()\n\n\n'
+            '@app.get("/b")\ndef get_b():\n    return b.load()\n'
+        ),
+    }.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text, encoding="utf-8")
+    argv = [
+        "--root", str(root), "--cache-dir", str(tmp_path / "cache"), "--python", sys.executable,
+    ]
+    assert main(["raises", "load", "--json", *argv]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert {(r["path"], r["exception"]) for r in data["rows"]} == {
+        ("/a", "builtins.ValueError"), ("/b", "builtins.KeyError"),
+    }
+    assert len(data["raised"]) == 2
+    # An exception as given is still asked of every function of the name.
+    assert main(["raises", "load", "--exception", "LookupError", "--json", *argv]) == 0
+    rows = json.loads(capsys.readouterr().out)["rows"]
+    assert {(r["path"], r["exception"]) for r in rows} == {
+        ("/a", "LookupError"), ("/b", "LookupError"),
+    }

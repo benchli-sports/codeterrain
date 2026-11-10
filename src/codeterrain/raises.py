@@ -248,12 +248,15 @@ def outcome(
     if chosen is None:
         for name in lineage:
             exact = [h for h in handlers if h["exception"] == name]
+            # A class outside the repository: the name as code imports it may be a re-export
+            # (`fastapi.HTTPException` of `fastapi.exceptions.HTTPException`): the same class
+            # name in the same package. The handler of that class itself comes first...
+            if not exact and index.definition(name) is None:
+                exact = [h for h in handlers if h["exception"] and _same(name, h["exception"])]
             if exact:
                 chosen = exact[0]
                 break
-            # A class outside the repository: the handled class nearest above it. The name as
-            # code imports it may be a re-export (`fastapi.HTTPException` of
-            # `fastapi.exceptions.HTTPException`): the same class name in the same package.
+            # ...then the handled class nearest above it.
             below = [h for h in handlers if any(_same(name, s) for s in h["subclasses"])]
             if below:
                 chosen = min(below, key=lambda h: len(h["subclasses"]))
