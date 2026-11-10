@@ -9,7 +9,9 @@
   a variable is set (`env.NAME`, kind `env`: Lambda and App Service maps, ECS `environment` lists,
   Kubernetes `env` blocks), never its value: the `name` of a record names a variable, while in an
   assigned map of variables `name` is a key like any other, so its value is not kept. A settings
-  prefix that is not a literal leaves its fields unmatched instead of reading as empty.
+  prefix or an alias that is not a literal (a name, a `**spread`, an `AliasPath`) leaves its fields
+  unmatched instead of reading as empty; each name of an `AliasChoices` is read, an alias inside
+  `Annotated` counts, and configuration merges as pydantic does, a later base winning.
   pydantic-settings fields map to the variable through a
   literal `env_prefix` or alias, with each field's readers; direct `os.environ` and `os.getenv`
   reads, sets and tests are new facts of the code index (format `code-23`), through the names the

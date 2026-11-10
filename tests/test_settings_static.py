@@ -118,3 +118,64 @@ def test_a_prefix_that_is_not_a_literal_leaves_its_fields_unmatched(tmp_path):
     assert [f["field"] for f in settings_fields(index, root, "SERVICE_TOKEN")] == [
         "app.settings.Settings.token"
     ]
+
+
+def test_configuration_merges_as_pydantic_does_with_the_later_base_winning(tmp_path):
+    root, index = _repo(tmp_path, {
+        "app/__init__.py": "",
+        "app/settings.py": (
+            "from pydantic_settings import BaseSettings, SettingsConfigDict\n\n\n"
+            "class Left(BaseSettings):\n"
+            '    model_config = SettingsConfigDict(env_prefix="LEFT_")\n\n\n'
+            "class Right(BaseSettings):\n"
+            '    model_config = SettingsConfigDict(env_prefix="RIGHT_")\n\n\n'
+            "class Both(Left, Right):\n    host: str = ''\n\n\n"
+            "class Own(Left, Right):\n"
+            '    model_config = SettingsConfigDict(env_prefix="OWN_")\n'
+            "    host: str = ''\n"
+        ),
+    })
+    assert settings_fields(index, root, "LEFT_HOST") == []
+    assert [f["cls"] for f in settings_fields(index, root, "RIGHT_HOST")] == ["app.settings.Both"]
+    assert [f["cls"] for f in settings_fields(index, root, "OWN_HOST")] == ["app.settings.Own"]
+
+
+def test_an_alias_or_a_configuration_that_cannot_be_read_invents_no_match(tmp_path):
+    root, index = _repo(tmp_path, {
+        "app/__init__.py": "",
+        "app/settings.py": (
+            "from typing import Annotated\n\n"
+            "from pydantic import AliasChoices, AliasPath, Field\n"
+            "from pydantic_settings import BaseSettings, SettingsConfigDict\n\n"
+            'NAME = "ELSEWHERE"\nSHARED = {"env_prefix": "APP_"}\n\n\n'
+            "class Settings(BaseSettings):\n"
+            '    token: str = Field("", validation_alias=AliasChoices("AUTH_TOKEN", "API_KEY"))\n'
+            "    region: str = Field('', alias=NAME)\n"
+            "    path: str = Field('', validation_alias=AliasPath('BLOB', 'path'))\n"
+            '    zone: Annotated[str, Field(alias="CLOUD_ZONE")] = ""\n\n\n'
+            "class Spread(BaseSettings):\n"
+            "    model_config = SettingsConfigDict(**SHARED)\n"
+            "    host: str = ''\n\n\n"
+            "class Named(BaseSettings):\n"
+            "    model_config = SHARED\n"
+            "    host: str = ''\n\n\n"
+            "class Given(BaseSettings):\n"
+            '    model_config = SettingsConfigDict(**SHARED, env_prefix="G_")\n'
+            "    host: str = ''\n"
+        ),
+    })
+
+    def fields(name):
+        return [f["field"].rpartition(".")[2] for f in settings_fields(index, root, name)]
+
+    # Each choice is read; the field's own name is not.
+    assert fields("AUTH_TOKEN") == ["token"] and fields("API_KEY") == ["token"]
+    assert fields("TOKEN") == []
+    # A name, and a path into another variable, are not read as the field's name either.
+    assert fields("REGION") == [] and fields("PATH") == []
+    # An alias inside `Annotated` counts.
+    assert fields("CLOUD_ZONE") == ["zone"] and fields("ZONE") == []
+    # A configuration from a spread or a name may set a prefix: nothing is said of `host`,
+    # unless the prefix is also given as a literal.
+    assert settings_fields(index, root, "HOST") == []
+    assert [f["cls"] for f in settings_fields(index, root, "G_HOST")] == ["app.settings.Given"]
