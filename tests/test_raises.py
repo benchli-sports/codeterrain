@@ -138,6 +138,29 @@ def test_the_status_comes_from_the_nearest_handler_or_is_500(tmp_path):
     # A catch-all handler takes what nothing nearer does.
     catch_all = [{**HANDLERS[1], "exception": "builtins.Exception", "subclasses": []}]
     assert status("builtins.ValueError", None, catch_all) == 409
+    # So does a handler registered for status 500, which is the server error's.
+    on_500 = [{**HANDLERS[1], "exception": "", "status": 500, "subclasses": []}]
+    assert status("builtins.ValueError", None, on_500) == 409
+
+
+def test_between_two_handled_bases_the_method_resolution_order_decides(tmp_path):
+    root, index = _repo(tmp_path)
+    (root / "app" / "both.py").write_text(
+        "class Left(Exception):\n    pass\n\n\n"
+        "class Right(Exception):\n    pass\n\n\n"
+        "class Leaf(Left, Right):\n    pass\n\n\n"
+        "class Other(Left):\n    pass\n",
+        encoding="utf-8",
+    )
+    index = Index(update(Cache(root, tmp_path / "cache2"), load_config(root)))
+    # Left has more loaded subclasses than Right: their number does not decide.
+    left = {**HANDLERS[1], "exception": "app.both.Left", "handler": "app.main.left",
+            "subclasses": ["app.both.Leaf", "app.both.Other"]}
+    right = {**HANDLERS[1], "exception": "app.both.Right", "handler": "app.main.right",
+             "subclasses": ["app.both.Leaf"]}
+    for handlers in ([left, right], [right, left]):
+        found = outcome(index, Trees(root), handlers, "app.both.Leaf", None)
+        assert found["handler"] == "app.main.left"
 
 
 def test_a_handler_of_the_re_exported_class_itself_wins_over_one_of_its_base(tmp_path):

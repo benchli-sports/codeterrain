@@ -27,7 +27,9 @@
   a tail of its path (`routes` for `apps/web/routes.py`), handlers, dependencies and handled
   classes are joined to the index's names. `--exception ValueError` names a built-in class as a
   raise of it is read. A dependency that is a callable instance is followed into its `__call__`,
-  and a handler registered for a status code answers only for an `HTTPException`.
+  and a handler registered for a status code answers only for an `HTTPException`, except the one
+  for 500, which takes what nothing else handles. Between two handled bases the method
+  resolution order decides.
 - A change of the code index's format now drops its `bases` table with the others. It was kept,
   so after an upgrade its rows could point at the file ids the rebuild reused.
 - `codeterrain fixture NAME` names, for each dependent of a fixture with several definitions, the

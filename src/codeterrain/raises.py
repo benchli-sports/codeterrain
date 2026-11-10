@@ -286,20 +286,27 @@ def outcome(
     if status is not None and any(n.rpartition(".")[2] == "HTTPException" for n in lineage):
         chosen = next((h for h in handlers if h["status"] == status), None)
     if chosen is None:
+        # The handler of the nearest class of the lineage, in its order: the method resolution
+        # order decides between two handled bases. A class outside the repository may be
+        # imported under a re-export (`fastapi.HTTPException` of
+        # `fastapi.exceptions.HTTPException`).
+        chosen = next(
+            (h for name in lineage for h in handlers if _is(index, name, h["exception"])), None
+        )
+    if chosen is None:
+        # Then a handled class above the lineage, outside the repository, by the loaded classes
+        # each handler's class has below it: the one with the fewest is the nearest.
         for name in lineage:
-            # The handler of the class itself. A class outside the repository may be imported
-            # under a re-export (`fastapi.HTTPException` of `fastapi.exceptions.HTTPException`).
-            exact = [h for h in handlers if _is(index, name, h["exception"])]
-            if exact:
-                chosen = exact[0]
-                break
-            # Then the handled class nearest above it, by the loaded classes below each.
             below = [h for h in handlers if any(_is(index, name, s) for s in h["subclasses"])]
             if below:
                 chosen = min(below, key=lambda h: len(h["subclasses"]))
                 break
     if chosen is None:
-        chosen = next((h for h in handlers if h["exception"] in _CATCH_ALL), None)
+        # What nothing handles is the server error: a handler of `Exception`, or the one
+        # registered for status 500, which Starlette installs in the same place.
+        chosen = next(
+            (h for h in handlers if h["exception"] in _CATCH_ALL or h["status"] == 500), None
+        )
     if chosen is None:
         return {"status": 500, "handler": "", "how": "unhandled"}
     return {
