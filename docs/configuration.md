@@ -73,6 +73,9 @@ apps = "apps"
   is not read otherwise. A top-level directory outside `test_paths` that holds a `conftest.py` or test
   modules is named in a note on `fixtures` and `fixture` answers (`unlisted_test_paths` with
   `--json`) and in `codeterrain doctor`.
+- The `conftest.py` of each folder above a test path, up to the root (a root `conftest.py`, or
+  `apps/api/conftest.py` above `apps/api/tests`), is read with it: pytest loads those for the tests
+  below them. A sibling folder's `conftest.py` is not on that way up and is not read.
 - Put source roots on the target's path with `import_env = { PYTHONPATH = "apps/api" }`.
 - The project's `addopts` are switched off during extraction (see [the sandbox](sandbox.md)), so `--cov` and report
   options cannot write into the repository.

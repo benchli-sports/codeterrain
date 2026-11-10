@@ -622,3 +622,45 @@ def test_unlisted_test_trees_names_top_level_directories_the_view_does_not_read(
     assert fixtures_static.unlisted_test_trees(load_config(tmp_path)) == []
     (tmp_path / "codeterrain.toml").write_text('test_paths = ["."]\n', encoding="utf-8")
     assert fixtures_static.unlisted_test_trees(load_config(tmp_path)) == []
+
+
+def test_a_conftest_above_the_test_paths_is_read_as_pytest_loads_it(tmp_path):
+    # pytest loads the conftest.py of every folder from the root down to a test: one beside
+    # `backend/tests` or at the root is in force there, and an override below it shadows it.
+    from codeterrain.cache import Cache
+    from codeterrain.config import Config, resolve_root
+
+    fixture = "import pytest\n\n\n@pytest.fixture{args}\ndef {name}():\n    return 1\n"
+    root = tmp_path / "repo"
+    files = {
+        "conftest.py": fixture.format(args="(autouse=True)", name="env"),
+        "backend/conftest.py": fixture.format(args="", name="db"),
+        "backend/tests/conftest.py": fixture.format(args="", name="db"),
+        "backend/tests/api/conftest.py": fixture.format(args="(autouse=True)", name="env"),
+        "backend/tests/api/test_a.py": "def test_a(db):\n    pass\n",
+        # A sibling folder's conftest is not on any test's way up: pytest does not load it.
+        "frontend/conftest.py": fixture.format(args="", name="browser"),
+    }
+    for rel, text in files.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(text, encoding="utf-8", newline="\n")
+    root = resolve_root(root)
+    config = Config(root=root, test_paths=("backend/tests",))
+    cache = Cache(root, tmp_path / "cache")
+    data = build(cache, config)[0].data
+    assert {(f["name"], f["file"]) for f in data["fixtures"]} == {
+        ("env", "conftest.py"),
+        ("db", "backend/conftest.py"),
+        ("db", "backend/tests/conftest.py"),
+        ("env", "backend/tests/api/conftest.py"),
+    }
+    assert _by(data, "env", "backend/tests/api/conftest.py")["overrides"] == "conftest.py:4"
+    assert _by(data, "db", "backend/tests/conftest.py")["overrides"] == "backend/conftest.py:4"
+
+    # An edit of the root conftest is seen: the view rebuilds with it.
+    (root / "conftest.py").write_text(
+        fixture.format(args="", name="extra"), encoding="utf-8", newline="\n"
+    )
+    record, rebuilt = build(Cache(root, tmp_path / "cache"), config)
+    assert rebuilt
+    assert ("extra", "conftest.py") in {(f["name"], f["file"]) for f in record.data["fixtures"]}

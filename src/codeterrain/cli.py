@@ -790,13 +790,12 @@ def cmd_fixture(ctx: Context) -> int:
             # No JSON follows a miss, and the fixture may be in a tree that is not read.
             _note(_unlisted_text(unlisted))
         return 1
-    deps = fixtures_static.dependents(record.data, ctx.args.name)
-    if len(found) > 1:
-        # Several definitions: say which one each dependent gets, the conftest to edit for it.
-        # Only then is the code index needed (class bases decide a class-level override).
-        winners = impact.fixture_winners(_code_index(ctx)[1], record.data, ctx.args.name)
-        for d in deps:
-            d["gets"] = winners.get((d["kind"], d["file"], d["name"], d["line"]), "")
+    # The tests pytest collects (inherited test methods too) and autouse reach come from the code
+    # index, the way `impact` sees them. With several definitions, each dependent also names the
+    # one it gets: the conftest to edit for it.
+    deps = impact.fixture_dependents(
+        _code_index(ctx)[1], record.data, ctx.args.name, resolve=len(found) > 1
+    )
     if ctx.args.json:
         _emit_json(
             "fixture", record.built_at, found, dependents=deps, unlisted_test_paths=unlisted
@@ -811,6 +810,7 @@ def cmd_fixture(ctx: Context) -> int:
     keep = len(lines)
     lines.extend(
         f"{d['kind']}  {d['name']}  {d['file']}:{d['line']}  {d['via']}"
+        + (f"  inherited from {d['inherited']}" if "inherited" in d else "")
         + (f"  gets {d['gets'] or '-'}" if "gets" in d else "")
         for d in deps
     )
