@@ -98,6 +98,16 @@ def test_routes_reach_through_callers_and_dependencies(tmp_path):
     assert [via for _, via in found] == [
         ["app.main.summary", "app.main.order_dep", "app.services.current_order"]
     ]
+    # A dependency that is a callable instance is named by its class; its body is `__call__`.
+    (root / "app" / "checks.py").write_text(
+        "from app.services import load\n\n\n"
+        "class Checker:\n    def __call__(self):\n        return load(1)\n",
+        encoding="utf-8",
+    )
+    index = Index(update(Cache(root, tmp_path / "cache2"), load_config(root)))
+    routes = [_route("/c", "app.main.health", ["app.checks.Checker"])]
+    found, _ = reaching(index, Trees(root), routes, "app.services.load")
+    assert [via for _, via in found] == [["app.checks.Checker.__call__", "app.services.load"]]
     assert reaching(index, Trees(root), ROUTES, "app.services.load", depth=1)[0][0][1] == [
         "app.main.get_order", "app.services.load"
     ]
@@ -121,6 +131,10 @@ def test_the_status_comes_from_the_nearest_handler_or_is_500(tmp_path):
     # A handler registered for a status code wins for an exception carrying it.
     by_code = [*HANDLERS, {**HANDLERS[1], "exception": "", "status": 404, "subclasses": []}]
     assert status("app.errors.NotFound", 404, by_code) == 409
+    # ...and only for an HTTPException: another class stating a status goes by its class.
+    only_code = [by_code[-1]]
+    assert status("app.errors.NotFound", 404, only_code) == 409
+    assert status("app.errors.Gone", 404, only_code) == 500
     # A catch-all handler takes what nothing nearer does.
     catch_all = [{**HANDLERS[1], "exception": "builtins.Exception", "subclasses": []}]
     assert status("builtins.ValueError", None, catch_all) == 409

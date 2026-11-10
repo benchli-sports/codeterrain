@@ -280,9 +280,11 @@ def outcome(
     """The handler an app runs for ``exception`` raised with ``status``, and the status it answers
     with: ``status`` (int, or None when the handler's is not a literal) and ``handler``."""
     chosen = None
-    if status is not None:
-        chosen = next((h for h in handlers if h["status"] == status), None)
     lineage = _lineage(index, exception)
+    # A handler registered for a status code runs for an `HTTPException` carrying it, and for
+    # no other exception, whatever `status_code` its class states.
+    if status is not None and any(n.rpartition(".")[2] == "HTTPException" for n in lineage):
+        chosen = next((h for h in handlers if h["status"] == status), None)
     if chosen is None:
         for name in lineage:
             # The handler of the class itself. A class outside the repository may be imported
@@ -355,6 +357,7 @@ def reaching(
         by_handler.setdefault(f"{handler}.__call__", []).append(route)
         for dep in route["dependencies"]:
             by_dependency.setdefault(indexed(index, dep), []).append(route)
+            by_dependency.setdefault(f"{indexed(index, dep)}.__call__", []).append(route)
 
     def served(name: str) -> list[dict[str, Any]]:
         """The routes ``name`` is the handler or a dependency of. A dependency comes without its

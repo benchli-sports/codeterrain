@@ -698,15 +698,19 @@ class _Reader(ast.NodeVisitor):
         attr = node.func.attr if isinstance(node.func, ast.Attribute) else (
             node.func.id if isinstance(node.func, ast.Name) else ""
         )
-        if node.args:
+        # The variable's name: the first argument, or the `key` keyword each of these takes.
+        named = node.args[0] if node.args else next(
+            (kw.value for kw in node.keywords if kw.arg == "key"), None
+        )
+        if named is not None:
             # `os.getenv("X")`, `os.environ.get("X")` and the like
             # and `read_env("X")` after `from os import getenv as read_env`
             if attr in _GETENV or (
                 isinstance(node.func, ast.Name) and self._env_names.get(attr) in _GETENV
             ):
-                self._env(node.lineno, node.args[0], callee, "get")
+                self._env(node.lineno, named, callee, "get")
             elif attr in ("get", "setdefault", "pop") and isinstance(node.func, ast.Attribute):
-                self._env(node.lineno, node.args[0], callee.rpartition(".")[0], attr)
+                self._env(node.lineno, named, callee.rpartition(".")[0], attr)
         scope = ".".join(self._scope)
         # The call and each of its arguments (a value use, a keyword name) count before any is
         # kept, so one call of a hundred thousand arguments is refused as a dense file is; each

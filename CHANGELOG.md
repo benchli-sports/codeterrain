@@ -10,7 +10,8 @@
   Kubernetes `env` blocks), never its value; pydantic-settings fields map to the variable through a
   literal `env_prefix` or alias, with each field's readers; direct `os.environ` and `os.getenv`
   reads, sets and tests are new facts of the code index (format `code-23`), through the names the
-  file imports them under (`from os import getenv as read_env`). A settings class also reads the
+  file imports them under (`from os import getenv as read_env`) and with the name given by
+  keyword (`key="NAME"`). A settings class also reads the
   fields of a base that is a plain model (`class Settings(Common, BaseSettings)`).
 - `codeterrain raises NAME`: the exceptions a function raises, the routes that reach it through
   callers and FastAPI dependencies (`Depends`, `Security`, and each route's own dependency
@@ -22,7 +23,8 @@
   that class before a handler of its base. In a nested project, where the app names a module by
   a tail of its path (`routes` for `apps/web/routes.py`), handlers, dependencies and handled
   classes are joined to the index's names. `--exception ValueError` names a built-in class as a
-  raise of it is read.
+  raise of it is read. A dependency that is a callable instance is followed into its `__call__`,
+  and a handler registered for a status code answers only for an `HTTPException`.
 - A change of the code index's format now drops its `bases` table with the others. It was kept,
   so after an upgrade its rows could point at the file ids the rebuild reused.
 - `codeterrain fixture NAME` names, for each dependent of a fixture with several definitions, the

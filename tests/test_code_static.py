@@ -2313,6 +2313,10 @@ def test_a_getenv_call_through_an_import_alias_is_an_environment_read(tmp_path):
         '    a = read_env("TOKEN")\n'
         # Another function of any name, and a parameter that shadows the alias, are not.
         '    b = other("TOKEN")\n'
+        # The name may be given by keyword.
+        '    c = read_env(key="TOKEN")\n'
+        '    d = env.get(key="TOKEN", default="")\n'
+        '    e = other(key="TOKEN")\n'
         "    return a, b\n\n\n"
         "def shadowed(read_env):\n"
         '    return read_env("TOKEN")\n',
@@ -2320,7 +2324,7 @@ def test_a_getenv_call_through_an_import_alias_is_an_environment_read(tmp_path):
     )
     index = _index(root, tmp_path / "cache")
     found = [(r["line"], r["how"], r["scope"]) for r in index.env_reads("TOKEN")]
-    assert found == [(6, "get", "reads")]
+    assert found == [(6, "get", "reads"), (8, "get", "reads"), (9, "get", "reads")]
 
 
 def test_a_format_change_drops_every_table_it_rebuilds(tmp_path):
